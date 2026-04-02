@@ -3,57 +3,62 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// ---------------------------------------------------------------------------
+// USER
+// ---------------------------------------------------------------------------
+
 model User {
-  id                    Int                     @id @default(autoincrement())
-  email                 String                  @unique
-  password              String
-  firstName             String
-  lastName              String
-  role                  UserRole                @default(TEEN)
-  dateOfBirth           DateTime?
-  age                   Int?
-  phone                 String?
-  country               String?
-  city                  String?
-  bio                   String?                 @db.Text
-  profileImage          String?
-  gender                Gender?
-  isActive              Boolean                 @default(true)
-  emailVerified         Boolean                 @default(false)
-  verificationToken     String?                 @unique
-  verificationExpires   DateTime?
-  lastActive            DateTime?               
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  reviews               CourseReview[]
-  enrollments           Enrollment[]
-  userSkills            UserSkill[]
-  menteeRelationships   Mentorship[]            @relation("Mentee")
-  mentorRelationships   Mentorship[]            @relation("Mentor")
-  instructedCourses     Course[]                @relation("Instructor")
-  eventRegistrations    EventRegistration[]
-  createdCommunities    Community[]             @relation("Creator")
-  communityMemberships  CommunityMember[]
-  posts                 Post[]
-  comments              Comment[]
-  createdProjects       Project[]               @relation("Creator")
-  projectMemberships    ProjectMember[]
-  achievements          UserAchievement[]
-  notifications         Notification[]
-  uploadedResources     Resource[]
-  assessmentAttempts    UserAssessmentAttempt[]
-  providedFeedback      Feedback[]              @relation("FeedbackProvider")
-  userInteractions      FlashcardInteraction[]
-  flashcards            Flashcard[]
-  flashcardCollections  FlashcardCollection[]
-  chatbotSessions       ChatbotSession[]
-  chatbotFeedback       ChatbotFeedback[]
-  savedAnswers          SavedAnswer[]
+  id                   Int                     @id @default(autoincrement())
+  email                String                  @unique
+  password             String
+  firstName            String
+  lastName             String
+  role                 UserRole                @default(TEEN)
+  dateOfBirth          DateTime?
+  age                  Int?
+  phone                String?
+  country              String?
+  city                 String?
+  bio                  String?                 @db.Text
+  profileImage         String?
+  gender               Gender?
+  isActive             Boolean                 @default(true)
+  emailVerified        Boolean                 @default(false)
+  verificationToken    String?                 @unique
+  verificationExpires  DateTime?
+  lastActive           DateTime?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  reviews              CourseReview[]
+  enrollments          Enrollment[]
+  userSkills           UserSkill[]
+  menteeRelationships  Mentorship[]            @relation("Mentee")
+  mentorRelationships  Mentorship[]            @relation("Mentor")
+  instructedCourses    Course[]                @relation("Instructor")
+  eventRegistrations   EventRegistration[]
+  createdCommunities   Community[]             @relation("Creator")
+  communityMemberships CommunityMember[]
+  posts                Post[]
+  comments             Comment[]
+  createdProjects      Project[]               @relation("Creator")
+  projectMemberships   ProjectMember[]
+  achievements         UserAchievement[]
+  notifications        Notification[]
+  uploadedResources    Resource[]
+  assessmentAttempts   UserAssessmentAttempt[]
+  providedFeedback     Feedback[]              @relation("FeedbackProvider")
+  userInteractions     FlashcardInteraction[]
+  flashcards           Flashcard[]
+  flashcardCollections FlashcardCollection[]
+  chatbotSessions      ChatbotSession[]
+  chatbotFeedback      ChatbotFeedback[]
+  savedAnswers         SavedAnswer[]
 }
 
 enum UserRole {
@@ -77,326 +82,163 @@ enum DifficultyLevel {
   EXPERT
 }
 
-model Flashcard {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  courseId        Int?
-  moduleId        Int?
-  question        String        @db.Text
-  answer          String        @db.Text
-  difficultyLevel Int           @default(1) // 1-5 scale
-  tags            String?       // Comma-separated tags
-  aiGenerated     Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  lastReviewed    DateTime?
-  timesReviewed   Int           @default(0)
-  confidenceLevel Int?          // User self-rating of confidence (1-5)
-  aiModel         String?       // Which AI model generated this
-  generationPrompt String?      @db.Text // What prompt was used (optional)
-  sourceContentSnippet String?  @db.Text // Small excerpt of original content
-  
-  user            User          @relation(fields: [userId], references: [id])
-  course          Course?       @relation(fields: [courseId], references: [id])
-  module          CourseModule? @relation(fields: [moduleId], references: [id])
-  userInteractions FlashcardInteraction[]
-  collections     FlashcardCollectionItem[]
-  
-  @@index([userId])
-  @@index([courseId])
-  @@index([moduleId])
+// ---------------------------------------------------------------------------
+// PROGRAMS
+// A Program is a curated learning path — an ordered sequence of courses.
+// Example: "Digital Entrepreneur Track" = Intro to Tech → Coding Basics → Business 101
+// ---------------------------------------------------------------------------
+
+model Program {
+  id          Int             @id @default(autoincrement())
+  title       String
+  slug        String          @unique
+  description String          @db.Text
+  thumbnail   String?
+  isPublished Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  courses     ProgramCourse[]
 }
 
-model FlashcardInteraction {
-  id              Int           @id @default(autoincrement())
-  flashcardId     Int
-  userId          Int
-  correct         Boolean
-  responseTime    Int?          // Time in seconds
-  interactionDate DateTime      @default(now())
-  
-  flashcard       Flashcard     @relation(fields: [flashcardId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
-  
-  @@index([flashcardId])
-  @@index([userId])
+// A course can belong to many programs; each program orders its courses independently
+model ProgramCourse {
+  id          Int     @id @default(autoincrement())
+  programId   Int
+  courseId    Int
+  orderNumber Int
+
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  course      Course  @relation(fields: [courseId], references: [id])
+
+  @@unique([programId, courseId])
+  @@index([programId])
 }
 
-model FlashcardCollection {
-  id              Int           @id @default(autoincrement())
-  name            String
-  description     String?       @db.Text
-  userId          Int
-  createdAt       DateTime      @default(now())
-  isPublic        Boolean       @default(false)
-  
-  user            User          @relation(fields: [userId], references: [id])
-  cards           FlashcardCollectionItem[]
-  
-  @@index([userId])
-}
+// ---------------------------------------------------------------------------
+// CATEGORIES
+// Replaces the old CourseType enum so admins can manage categories from the dashboard
+// without requiring a code deploy.
+// ---------------------------------------------------------------------------
 
-model FlashcardCollectionItem {
-  id                Int                @id @default(autoincrement())
-  collectionId      Int
-  flashcardId       Int
-  addedAt           DateTime           @default(now())
-  
-  collection        FlashcardCollection @relation(fields: [collectionId], references: [id])
-  flashcard         Flashcard          @relation(fields: [flashcardId], references: [id])
-  
-  @@unique([collectionId, flashcardId])
-}
-
-model ChatbotSession {
-  id              Int                   @id @default(autoincrement())
-  userId          Int
-  title           String?               // Auto-generated or user-defined name
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  isActive        Boolean               @default(true)
-  
-  user            User                  @relation(fields: [userId], references: [id])
-  messages        ChatbotMessage[]
-  analytics       ChatbotSessionAnalytics?
-  
-  @@index([userId])
-}
-
-model ChatbotMessage {
-  id              Int           @id @default(autoincrement())
-  sessionId       Int
-  content         String        @db.Text
-  role            MessageRole   // user or assistant
-  timestamp       DateTime      @default(now())
-  referencedContent String?     @db.Text  // Links, resources, or module content referenced
-  courseId        Int?          // If message is related to specific course
-  moduleId        Int?          // If message is related to specific module
-  model           String?       // Store which AI model generated this response
-  promptTokens    Int?          // Optional: track token usage if needed
-  completionTokens Int?         // Optional: track token usage if needed
-  
-  session         ChatbotSession @relation(fields: [sessionId], references: [id])
-  course          Course?        @relation(fields: [courseId], references: [id])
-  module          CourseModule?  @relation(fields: [moduleId], references: [id])
-  feedback        ChatbotFeedback?
-  
-  @@index([sessionId])
-  @@index([role])
-}
-
-enum MessageRole {
-  USER
-  ASSISTANT
-}
-
-model ChatbotFeedback {
-  id              Int           @id @default(autoincrement())
-  messageId       Int           @unique
-  userId          Int
-  rating          Int?          // 1-5 stars
-  feedback        String?       @db.Text
-  createdAt       DateTime      @default(now())
-  
-  message         ChatbotMessage @relation(fields: [messageId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
-}
-
-model ChatbotSessionAnalytics {
-  id              Int           @id @default(autoincrement())
-  sessionId       Int           @unique
-  messageCount    Int           @default(0)
-  userMessageCount Int          @default(0)
-  aiMessageCount  Int           @default(0)
-  averageUserMessageLength Int?
-  averageAiResponseLength Int?
-  topicsDiscussed String?       @db.Text // JSON array of topics
-  
-  session         ChatbotSession @relation(fields: [sessionId], references: [id])
-}
-
-model SavedAnswer {
-  id              Int           @id @default(autoincrement())
-  question        String        @db.Text
-  answer          String        @db.Text
-  category        String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  isPublic        Boolean       @default(true)
-  userId          Int?          
-  courseId        Int?          
-  
-  user            User?         @relation(fields: [userId], references: [id])
-  course          Course?       @relation(fields: [courseId], references: [id])
-  
-  @@index([category])
-  @@index([userId])
-  @@index([courseId])
-}
-
-model Skill {
-  id          Int         @id @default(autoincrement())
-  name        String
-  category    String
-  description String?     @db.Text
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
   icon        String?
-  userSkills  UserSkill[]
+
+  courses     Course[]
 }
 
-model UserSkill {
-  id               Int       @id @default(autoincrement())
-  userId           Int
-  skillId          Int
-  proficiencyLevel Int
-  acquiredDate     DateTime?
-  
-  user             User      @relation(fields: [userId], references: [id])
-  skill            Skill     @relation(fields: [skillId], references: [id])
-  
-  @@unique([userId, skillId])
-}
+// ---------------------------------------------------------------------------
+// COURSES
+// A Course is a standalone unit of learning made up of ordered modules.
+// tags, outcomes, and requirements are simple string arrays — no join tables needed.
+// ---------------------------------------------------------------------------
 
 model Course {
-  id                Int               @id @default(autoincrement())
-  title             String
-  slug              String            @unique
-  description       String            @db.Text
-  overview          String?           @db.Text
-  thumbnail         String?
-  coverImage        String?          
-  type              CourseType        
-  difficulty        DifficultyLevel?
-  instructorId      Int?
-  durationHours     Int?              // Estimated completion time
-  isFeatured        Boolean           @default(false)
-  isPublished       Boolean           @default(false) // Replace isActive
-  startDate         DateTime?         
-  endDate           DateTime?         
-  enrollmentLimit   Int?             
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  
-  // Relationships
-  instructor        User?             @relation("Instructor", fields: [instructorId], references: [id])
-  modules           CourseModule[]
-  enrollments       Enrollment[]
-  learningOutcomes  LearningOutcome[]
-  requirements      CourseRequirement[]
-  assessments       Assessment[]
-  flashcards        Flashcard[]
-  chatbotMessages   ChatbotMessage[]
-  savedAnswers      SavedAnswer[]
-  tags              CourseTags[]
-  reviews           CourseReview[]
-  
-  @@index([type])
+  id              Int              @id @default(autoincrement())
+  title           String
+  slug            String           @unique
+  description     String           @db.Text
+  thumbnail       String?
+  categoryId      Int
+  difficulty      DifficultyLevel?
+  instructorId    Int?
+  durationHours   Int?
+  isFeatured      Boolean          @default(false)
+  isPublished     Boolean          @default(false)
+  startDate       DateTime?
+  endDate         DateTime?
+  enrollmentLimit Int?
+  tags            String[]
+  outcomes        String[]
+  requirements    String[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  category        Category         @relation(fields: [categoryId], references: [id])
+  instructor      User?            @relation("Instructor", fields: [instructorId], references: [id])
+  modules         CourseModule[]
+  enrollments     Enrollment[]
+  assessments     Assessment[]
+  reviews         CourseReview[]
+  flashcards      Flashcard[]
+  chatbotMessages ChatbotMessage[]
+  savedAnswers    SavedAnswer[]
+  programs        ProgramCourse[]
+
+  @@index([categoryId])
   @@index([difficulty])
   @@index([instructorId])
 }
 
-enum CourseType {
-  HEALTH
-  TECH
-  FINANCIAL_LITERACY
-  LEADERSHIP
-  ENTREPRENEURSHIP
-  PERSONAL_DEVELOPMENT
-  CAREER
-  CREATIVITY
-  ACADEMIC
-}
-
-model CourseTags {
-  id        Int      @id @default(autoincrement())
-  courseId  Int
-  name      String
-  
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
-  @@unique([courseId, name])
-}
-
-model LearningOutcome {
-  id          Int     @id @default(autoincrement())
-  courseId    Int
-  description String
-  orderNumber Int     // For ordering outcomes
-  
-  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
-  @@index([courseId])
-}
-
-model CourseRequirement {
-  id          Int     @id @default(autoincrement())
-  courseId    Int
-  description String
-  orderNumber Int     // For ordering requirements
-  
-  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
-  @@index([courseId])
-}
+// ---------------------------------------------------------------------------
+// MODULES
+// A Module is a chapter inside a course — an ordered group of content units.
+// ---------------------------------------------------------------------------
 
 model CourseModule {
-  id              Int                @id @default(autoincrement())
-  courseId        Int                // Changed from programId
+  id              Int              @id @default(autoincrement())
+  courseId        Int
   title           String
-  description     String             @db.Text
+  description     String?          @db.Text
   orderNumber     Int
-  isPublished     Boolean            @default(false)
+  isPublished     Boolean          @default(false)
   estimatedHours  Int?
-  unlockCondition String?            @db.Text // JSON conditions to unlock module
-  thumbnail       String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  
-  // Relationships
-  course          Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  units           ContentUnit[]      // Replaces lessons
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  units           ContentUnit[]
   quizzes         Quiz[]
   exercises       Exercise[]
   userProgress    ModuleProgress[]
   flashcards      Flashcard[]
   chatbotMessages ChatbotMessage[]
-  
+
+  @@unique([courseId, orderNumber])
   @@index([courseId])
-  @@unique([courseId, orderNumber]) // Ensure unique ordering
 }
 
+// ---------------------------------------------------------------------------
+// CONTENT UNITS
+// A ContentUnit is one lesson inside a module.
+// `content` holds either the text body or a URL — contentType tells you which.
+// ---------------------------------------------------------------------------
+
 model ContentUnit {
-  id              Int             @id @default(autoincrement())
-  moduleId        Int
-  title           String
-  description     String?         @db.Text
-  contentType     ContentType
-  orderNumber     Int
-  estimatedMinutes Int?           // Time to complete
-  isRequired      Boolean         @default(true)
-  textContent     String?         @db.Text         // For TEXT type
-  videoUrl        String?                          // For VIDEO type
-  audioUrl        String?                          // For AUDIO type
-  fileUrl         String?                          // For RESOURCE type
-  externalUrl     String?                          // For external references
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  module          CourseModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress        UnitProgress[]  // Track individual unit progress
-  attachments     UnitAttachment[]
-  
+  id               Int            @id @default(autoincrement())
+  moduleId         Int
+  title            String
+  description      String?        @db.Text
+  contentType      ContentType
+  orderNumber      Int
+  estimatedMinutes Int?
+  isRequired       Boolean        @default(true)
+  content          String?        @db.Text // text body for TEXT; URL for VIDEO/AUDIO/RESOURCE/INTERACTIVE
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  module           CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress         UnitProgress[]
+  attachments      UnitAttachment[]
+
+  @@unique([moduleId, orderNumber])
   @@index([moduleId])
-  @@unique([moduleId, orderNumber]) // Ensure unique ordering
 }
 
 model UnitAttachment {
-  id            Int           @id @default(autoincrement())
-  unitId        Int
-  title         String
-  description   String?
-  fileUrl       String
-  fileType      String        
-  
-  unit          ContentUnit   @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  
+  id          Int         @id @default(autoincrement())
+  unitId      Int
+  title       String
+  description String?
+  fileUrl     String
+  fileType    String
+
+  unit        ContentUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
   @@index([unitId])
 }
 
@@ -409,25 +251,29 @@ enum ContentType {
   RESOURCE
 }
 
+// ---------------------------------------------------------------------------
+// ENROLLMENT & PROGRESS
+// ---------------------------------------------------------------------------
+
 model Enrollment {
-  id                Int             @id @default(autoincrement())
-  userId            Int
-  courseId          Int             // Changed from programId
-  enrollmentDate    DateTime        @default(now())
-  status            EnrollmentStatus @default(ACTIVE)
-  completionDate    DateTime?
-  progressPercentage Int             @default(0)
-  lastAccessedAt    DateTime?       // Track when user last accessed course
-  unenrollmentDate  DateTime?       // New field to track when unenrolled
-  unenrollmentReason String?        // Optional feedback
-  
-  course            Course          @relation(fields: [courseId], references: [id])
-  user              User            @relation(fields: [userId], references: [id])
-  moduleProgress    ModuleProgress[]
-  unitProgress      UnitProgress[]
-  quizAttempts      QuizAttempt[]
+  id                  Int                  @id @default(autoincrement())
+  userId              Int
+  courseId            Int
+  enrollmentDate      DateTime             @default(now())
+  status              EnrollmentStatus     @default(ACTIVE)
+  completionDate      DateTime?
+  progressPercentage  Int                  @default(0)
+  lastAccessedAt      DateTime?
+  unenrollmentDate    DateTime?
+  unenrollmentReason  String?
+
+  course              Course               @relation(fields: [courseId], references: [id])
+  user                User                 @relation(fields: [userId], references: [id])
+  moduleProgress      ModuleProgress[]
+  unitProgress        UnitProgress[]
+  quizAttempts        QuizAttempt[]
   exerciseSubmissions ExerciseSubmission[]
-  
+
   @@unique([userId, courseId])
   @@index([status])
 }
@@ -441,134 +287,133 @@ enum EnrollmentStatus {
 }
 
 model ModuleProgress {
-  id              Int          @id @default(autoincrement())
-  enrollmentId    Int
-  moduleId        Int
-  userId          Int          // For easier querying
-  startedAt       DateTime     @default(now())
-  completedAt     DateTime?
-  progressPercentage Int       @default(0)
-  
-  // Relationships
-  enrollment      Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  module          CourseModule @relation(fields: [moduleId], references: [id])
-  
+  id                 Int          @id @default(autoincrement())
+  enrollmentId       Int
+  moduleId           Int
+  userId             Int
+  startedAt          DateTime     @default(now())
+  completedAt        DateTime?
+  progressPercentage Int          @default(0)
+
+  enrollment         Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module             CourseModule @relation(fields: [moduleId], references: [id])
+
   @@unique([enrollmentId, moduleId])
   @@index([userId, moduleId])
 }
 
 model UnitProgress {
-  id              Int          @id @default(autoincrement())
-  enrollmentId    Int
-  unitId          Int
-  userId          Int          // For easier querying
-  startedAt       DateTime     @default(now())
-  completedAt     DateTime?
+  id               Int         @id @default(autoincrement())
+  enrollmentId     Int
+  unitId           Int
+  userId           Int
+  startedAt        DateTime    @default(now())
+  completedAt      DateTime?
   timeSpentMinutes Int         @default(0)
-  lastPosition    String?      // For videos/audio - timestamp
-  
-  // Relationships
-  enrollment      Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  unit            ContentUnit  @relation(fields: [unitId], references: [id])
-  
+  lastPosition     String?
+
+  enrollment       Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  unit             ContentUnit @relation(fields: [unitId], references: [id])
+
   @@unique([enrollmentId, unitId])
   @@index([userId, unitId])
 }
 
-// Enhanced quiz system
+// ---------------------------------------------------------------------------
+// QUIZ
+// ---------------------------------------------------------------------------
+
 model Quiz {
-  id              Int             @id @default(autoincrement())
-  moduleId        Int
-  title           String
-  description     String?         @db.Text
-  timeLimit       Int?            // Time limit in minutes (null = no limit)
-  passingScore    Int             @default(70) // Percentage needed to pass
-  allowRetakes    Boolean         @default(true)
-  maxAttempts     Int?            // null = unlimited
-  randomizeQuestions Boolean      @default(false)
-  showCorrectAnswers Boolean      @default(true)
-  orderNumber     Int
-  isPublished     Boolean         @default(false)
-  
-  // Relationships
-  module          CourseModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  questions       QuizQuestion[]
-  attempts        QuizAttempt[]
-  
+  id                 Int            @id @default(autoincrement())
+  moduleId           Int
+  title              String
+  description        String?        @db.Text
+  timeLimit          Int?
+  passingScore       Int            @default(70)
+  allowRetakes       Boolean        @default(true)
+  maxAttempts        Int?
+  randomizeQuestions Boolean        @default(false)
+  showCorrectAnswers Boolean        @default(true)
+  orderNumber        Int
+  isPublished        Boolean        @default(false)
+
+  module             CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  questions          QuizQuestion[]
+  attempts           QuizAttempt[]
+
   @@index([moduleId])
 }
 
 model QuizQuestion {
-  id              Int             @id @default(autoincrement())
-  quizId          Int
-  questionText    String          @db.Text
-  questionType    QuestionType
-  points          Int             @default(1)
-  orderNumber     Int
-  options         String?         @db.Text // JSON array of options
-  correctAnswer   String?         @db.Text // Could be single value or JSON array
-  explanation     String?         @db.Text // Explanation of correct answer
-  
-  // Relationships
-  quiz            Quiz            @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers         QuestionAnswer[]
-  
+  id            Int              @id @default(autoincrement())
+  quizId        Int
+  questionText  String           @db.Text
+  questionType  QuestionType
+  points        Int              @default(1)
+  orderNumber   Int
+  options       String?          @db.Text
+  correctAnswer String?          @db.Text
+  explanation   String?          @db.Text
+
+  quiz          Quiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers       QuestionAnswer[]
+
   @@index([quizId])
 }
 
 model QuizAttempt {
-  id              Int             @id @default(autoincrement())
-  enrollmentId    Int
-  quizId          Int
-  userId          Int             // For easier querying
-  startedAt       DateTime        @default(now())
-  submittedAt     DateTime?
-  score           Int?            // Points scored
-  percentage      Float?          // Percentage score
-  passed          Boolean?        // null = not graded yet
-  attemptNumber   Int             @default(1)
-  
-  // Relationships
-  enrollment      Enrollment      @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  quiz            Quiz            @relation(fields: [quizId], references: [id])
-  answers         QuestionAnswer[]
-  
+  id            Int              @id @default(autoincrement())
+  enrollmentId  Int
+  quizId        Int
+  userId        Int
+  startedAt     DateTime         @default(now())
+  submittedAt   DateTime?
+  score         Int?
+  percentage    Float?
+  passed        Boolean?
+  attemptNumber Int              @default(1)
+
+  enrollment    Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  quiz          Quiz             @relation(fields: [quizId], references: [id])
+  answers       QuestionAnswer[]
+
   @@index([userId, quizId])
   @@index([enrollmentId, quizId])
 }
 
 model QuestionAnswer {
-  id              Int             @id @default(autoincrement())
-  attemptId       Int
-  questionId      Int
-  userAnswer      String?         @db.Text
-  isCorrect       Boolean?        // null = not graded yet
-  pointsAwarded   Int?
-  
-  // Relationships
-  attempt         QuizAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question        QuizQuestion    @relation(fields: [questionId], references: [id])
-  
+  id           Int          @id @default(autoincrement())
+  attemptId    Int
+  questionId   Int
+  userAnswer   String?      @db.Text
+  isCorrect    Boolean?
+  pointsAwarded Int?
+
+  attempt      QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question     QuizQuestion @relation(fields: [questionId], references: [id])
+
   @@unique([attemptId, questionId])
 }
 
-// Course exercises
+// ---------------------------------------------------------------------------
+// EXERCISES
+// ---------------------------------------------------------------------------
+
 model Exercise {
-  id              Int                 @id @default(autoincrement())
-  moduleId        Int
-  title           String
-  description     String              @db.Text
-  instructions    String              @db.Text
-  exerciseType    ExerciseType
-  orderNumber     Int
-  dueDate         DateTime?
-  allowLateSubmissions Boolean        @default(true)
-  maxScore        Int                 @default(100)
-  
-  // Relationships
-  module          CourseModule        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  submissions     ExerciseSubmission[]
-  
+  id                   Int                  @id @default(autoincrement())
+  moduleId             Int
+  title                String
+  description          String               @db.Text
+  instructions         String               @db.Text
+  exerciseType         ExerciseType
+  orderNumber          Int
+  dueDate              DateTime?
+  allowLateSubmissions Boolean              @default(true)
+  maxScore             Int                  @default(100)
+
+  module               CourseModule         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  submissions          ExerciseSubmission[]
+
   @@index([moduleId])
 }
 
@@ -581,82 +426,332 @@ enum ExerciseType {
 }
 
 model ExerciseSubmission {
-  id              Int             @id @default(autoincrement())
-  exerciseId      Int
-  enrollmentId    Int
-  userId          Int             // For easier querying
-  submittedAt     DateTime        @default(now())
-  content         String?         @db.Text
-  fileUrl         String?
-  score           Int?            // null = not graded yet
-  feedback        String?         @db.Text
-  gradedAt        DateTime?
-  gradedBy        Int?            // User ID of grader
-  
-  // Relationships
-  exercise        Exercise        @relation(fields: [exerciseId], references: [id])
-  enrollment      Enrollment      @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  
+  id           Int        @id @default(autoincrement())
+  exerciseId   Int
+  enrollmentId Int
+  userId       Int
+  submittedAt  DateTime   @default(now())
+  content      String?    @db.Text
+  fileUrl      String?
+  score        Int?
+  feedback     String?    @db.Text
+  gradedAt     DateTime?
+  gradedBy     Int?
+
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id])
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
   @@index([userId, exerciseId])
   @@index([enrollmentId, exerciseId])
 }
 
-// Course reviews
+// ---------------------------------------------------------------------------
+// ASSESSMENT
+// ---------------------------------------------------------------------------
+
+model Assessment {
+  id            Int                     @id @default(autoincrement())
+  courseId      Int
+  title         String
+  description   String                  @db.Text
+  totalPoints   Int
+  passingPoints Int
+  createdAt     DateTime                @default(now())
+
+  course        Course                  @relation(fields: [courseId], references: [id])
+  questions     AssessmentQuestion[]
+  attempts      UserAssessmentAttempt[]
+}
+
+model AssessmentQuestion {
+  id            Int          @id @default(autoincrement())
+  assessmentId  Int
+  question      String       @db.Text
+  questionType  QuestionType
+  points        Int
+  orderNumber   Int
+  options       String?      @db.Text
+  correctAnswer String?      @db.Text
+
+  assessment    Assessment   @relation(fields: [assessmentId], references: [id])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SINGLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILE_UPLOAD
+}
+
+model UserAssessmentAttempt {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  assessmentId Int
+  score        Int
+  passed       Boolean
+  attemptDate  DateTime   @default(now())
+  attemptNumber Int
+  answers      String?    @db.Text
+
+  user         User       @relation(fields: [userId], references: [id])
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// COURSE REVIEWS
+// ---------------------------------------------------------------------------
+
 model CourseReview {
-  id              Int             @id @default(autoincrement())
-  courseId        Int
-  userId          Int
-  rating          Int             // 1-5 stars
-  comment         String?         @db.Text
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  isPublished     Boolean         @default(true)
-  
-  user            User            @relation(fields: [userId], references: [id])
-  course          Course          @relation(fields: [courseId], references: [id])
-  
+  id          Int      @id @default(autoincrement())
+  courseId    Int
+  userId      Int
+  rating      Int
+  comment     String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isPublished Boolean  @default(true)
+
+  user        User     @relation(fields: [userId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id])
+
   @@unique([userId, courseId])
   @@index([courseId])
   @@index([rating])
 }
 
+// ---------------------------------------------------------------------------
+// AI — FLASHCARDS
+// ---------------------------------------------------------------------------
+
+model Flashcard {
+  id                   Int                      @id @default(autoincrement())
+  userId               Int
+  courseId             Int?
+  moduleId             Int?
+  question             String                   @db.Text
+  answer               String                   @db.Text
+  difficultyLevel      Int                      @default(1)
+  tags                 String?
+  aiGenerated          Boolean                  @default(true)
+  createdAt            DateTime                 @default(now())
+  lastReviewed         DateTime?
+  timesReviewed        Int                      @default(0)
+  confidenceLevel      Int?
+  aiModel              String?
+  generationPrompt     String?                  @db.Text
+  sourceContentSnippet String?                  @db.Text
+
+  user                 User                     @relation(fields: [userId], references: [id])
+  course               Course?                  @relation(fields: [courseId], references: [id])
+  module               CourseModule?            @relation(fields: [moduleId], references: [id])
+  userInteractions     FlashcardInteraction[]
+  collections          FlashcardCollectionItem[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model FlashcardInteraction {
+  id              Int       @id @default(autoincrement())
+  flashcardId     Int
+  userId          Int
+  correct         Boolean
+  responseTime    Int?
+  interactionDate DateTime  @default(now())
+
+  flashcard       Flashcard @relation(fields: [flashcardId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([flashcardId])
+  @@index([userId])
+}
+
+model FlashcardCollection {
+  id          Int                      @id @default(autoincrement())
+  name        String
+  description String?                  @db.Text
+  userId      Int
+  createdAt   DateTime                 @default(now())
+  isPublic    Boolean                  @default(false)
+
+  user        User                     @relation(fields: [userId], references: [id])
+  cards       FlashcardCollectionItem[]
+
+  @@index([userId])
+}
+
+model FlashcardCollectionItem {
+  id           Int                 @id @default(autoincrement())
+  collectionId Int
+  flashcardId  Int
+  addedAt      DateTime            @default(now())
+
+  collection   FlashcardCollection @relation(fields: [collectionId], references: [id])
+  flashcard    Flashcard           @relation(fields: [flashcardId], references: [id])
+
+  @@unique([collectionId, flashcardId])
+}
+
+// ---------------------------------------------------------------------------
+// AI — CHATBOT
+// ---------------------------------------------------------------------------
+
+model ChatbotSession {
+  id        Int                      @id @default(autoincrement())
+  userId    Int
+  title     String?
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  isActive  Boolean                  @default(true)
+
+  user      User                     @relation(fields: [userId], references: [id])
+  messages  ChatbotMessage[]
+  analytics ChatbotSessionAnalytics?
+
+  @@index([userId])
+}
+
+model ChatbotMessage {
+  id                Int              @id @default(autoincrement())
+  sessionId         Int
+  content           String           @db.Text
+  role              MessageRole
+  timestamp         DateTime         @default(now())
+  referencedContent String?          @db.Text
+  courseId          Int?
+  moduleId          Int?
+  model             String?
+  promptTokens      Int?
+  completionTokens  Int?
+
+  session           ChatbotSession   @relation(fields: [sessionId], references: [id])
+  course            Course?          @relation(fields: [courseId], references: [id])
+  module            CourseModule?    @relation(fields: [moduleId], references: [id])
+  feedback          ChatbotFeedback?
+
+  @@index([sessionId])
+  @@index([role])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model ChatbotFeedback {
+  id        Int            @id @default(autoincrement())
+  messageId Int            @unique
+  userId    Int
+  rating    Int?
+  feedback  String?        @db.Text
+  createdAt DateTime       @default(now())
+
+  message   ChatbotMessage @relation(fields: [messageId], references: [id])
+  user      User           @relation(fields: [userId], references: [id])
+}
+
+model ChatbotSessionAnalytics {
+  id                       Int            @id @default(autoincrement())
+  sessionId                Int            @unique
+  messageCount             Int            @default(0)
+  userMessageCount         Int            @default(0)
+  aiMessageCount           Int            @default(0)
+  averageUserMessageLength Int?
+  averageAiResponseLength  Int?
+  topicsDiscussed          String?        @db.Text
+
+  session                  ChatbotSession @relation(fields: [sessionId], references: [id])
+}
+
+model SavedAnswer {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.Text
+  answer    String   @db.Text
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isPublic  Boolean  @default(true)
+  userId    Int?
+  courseId  Int?
+
+  user      User?    @relation(fields: [userId], references: [id])
+  course    Course?  @relation(fields: [courseId], references: [id])
+
+  @@index([category])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ---------------------------------------------------------------------------
+// SKILLS
+// ---------------------------------------------------------------------------
+
+model Skill {
+  id          Int         @id @default(autoincrement())
+  name        String
+  category    String
+  description String?     @db.Text
+  icon        String?
+
+  userSkills  UserSkill[]
+}
+
+model UserSkill {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  skillId          Int
+  proficiencyLevel Int
+  acquiredDate     DateTime?
+
+  user             User      @relation(fields: [userId], references: [id])
+  skill            Skill     @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+}
+
+// ---------------------------------------------------------------------------
+// MENTORSHIP
+// ---------------------------------------------------------------------------
+
 model MentorshipProgram {
-  id          Int           @id @default(autoincrement())
-  title       String
-  description String        @db.Text
-  startDate   DateTime
-  endDate     DateTime?
-  maxMentees  Int
-  isActive    Boolean       @default(true)
-  
+  id            Int          @id @default(autoincrement())
+  title         String
+  description   String       @db.Text
+  startDate     DateTime
+  endDate       DateTime?
+  maxMentees    Int
+  isActive      Boolean      @default(true)
+
   relationships Mentorship[]
 }
 
 model Mentorship {
-  id            Int               @id @default(autoincrement())
-  mentorId      Int
-  menteeId      Int
-  programId     Int?
-  startDate     DateTime          @default(now())
-  endDate       DateTime?
-  status        StatusType
-  
-  mentee        User              @relation("Mentee", fields: [menteeId], references: [id])
-  mentor        User              @relation("Mentor", fields: [mentorId], references: [id])
-  program       MentorshipProgram? @relation(fields: [programId], references: [id])
-  
-  sessions      MentorshipSession[]
+  id        Int                @id @default(autoincrement())
+  mentorId  Int
+  menteeId  Int
+  programId Int?
+  startDate DateTime           @default(now())
+  endDate   DateTime?
+  status    StatusType
+
+  mentee    User               @relation("Mentee", fields: [menteeId], references: [id])
+  mentor    User               @relation("Mentor", fields: [mentorId], references: [id])
+  program   MentorshipProgram? @relation(fields: [programId], references: [id])
+  sessions  MentorshipSession[]
 }
 
 model MentorshipSession {
-  id              Int       @id @default(autoincrement())
+  id              Int        @id @default(autoincrement())
   relationshipId  Int
   sessionDate     DateTime
   durationMinutes Int
-  notes           String?   @db.Text
+  notes           String?    @db.Text
   status          SessionStatus
-  feedback        String?   @db.Text
-  
+  feedback        String?    @db.Text
+
   relationship    Mentorship @relation(fields: [relationshipId], references: [id])
 }
 
@@ -667,35 +762,43 @@ enum SessionStatus {
   MISSED
 }
 
+// ---------------------------------------------------------------------------
+// EVENTS
+// ---------------------------------------------------------------------------
+
 model Event {
-  id                    Int                 @id @default(autoincrement())
-  title                 String
-  description           String              @db.Text
-  eventDate             DateTime
-  startTime             DateTime
-  endTime               DateTime
-  location              String?
-  virtualLink           String?
-  isVirtual             Boolean             @default(false)
-  maxParticipants       Int?
-  thumbnail             String?
-  registrationDeadline  DateTime?
-  
-  registrations         EventRegistration[]
+  id                   Int                 @id @default(autoincrement())
+  title                String
+  description          String              @db.Text
+  eventDate            DateTime
+  startTime            DateTime
+  endTime              DateTime
+  location             String?
+  virtualLink          String?
+  isVirtual            Boolean             @default(false)
+  maxParticipants      Int?
+  thumbnail            String?
+  registrationDeadline DateTime?
+
+  registrations        EventRegistration[]
 }
 
 model EventRegistration {
-  id                 Int       @id @default(autoincrement())
-  eventId            Int
-  userId             Int
-  registrationDate   DateTime  @default(now())
-  attendanceConfirmed Boolean   @default(false)
-  
-  event              Event     @relation(fields: [eventId], references: [id])
-  user               User      @relation(fields: [userId], references: [id])
-  
+  id                  Int      @id @default(autoincrement())
+  eventId             Int
+  userId              Int
+  registrationDate    DateTime @default(now())
+  attendanceConfirmed Boolean  @default(false)
+
+  event               Event    @relation(fields: [eventId], references: [id])
+  user                User     @relation(fields: [userId], references: [id])
+
   @@unique([eventId, userId])
 }
+
+// ---------------------------------------------------------------------------
+// COMMUNITY
+// ---------------------------------------------------------------------------
 
 model Community {
   id          Int               @id @default(autoincrement())
@@ -705,22 +808,22 @@ model Community {
   creatorId   Int
   createdAt   DateTime          @default(now())
   isPrivate   Boolean           @default(false)
-  
+
   creator     User              @relation("Creator", fields: [creatorId], references: [id])
   members     CommunityMember[]
   posts       Post[]
 }
 
 model CommunityMember {
-  id           Int             @id @default(autoincrement())
-  communityId  Int
-  userId       Int
-  joinedDate   DateTime        @default(now())
-  role         CommunityRole   @default(MEMBER)
-  
-  community    Community       @relation(fields: [communityId], references: [id])
-  user         User            @relation(fields: [userId], references: [id])
-  
+  id          Int           @id @default(autoincrement())
+  communityId Int
+  userId      Int
+  joinedDate  DateTime      @default(now())
+  role        CommunityRole @default(MEMBER)
+
+  community   Community     @relation(fields: [communityId], references: [id])
+  user        User          @relation(fields: [userId], references: [id])
+
   @@unique([communityId, userId])
 }
 
@@ -738,7 +841,7 @@ model Post {
   content     String    @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
+
   author      User      @relation(fields: [authorId], references: [id])
   community   Community @relation(fields: [communityId], references: [id])
   comments    Comment[]
@@ -750,10 +853,14 @@ model Comment {
   userId    Int
   content   String   @db.Text
   createdAt DateTime @default(now())
-  
+
   post      Post     @relation(fields: [postId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 }
+
+// ---------------------------------------------------------------------------
+// PROJECTS
+// ---------------------------------------------------------------------------
 
 model Project {
   id          Int             @id @default(autoincrement())
@@ -766,7 +873,7 @@ model Project {
   githubUrl   String?
   demoUrl     String?
   thumbnail   String?
-  
+
   creator     User            @relation("Creator", fields: [creatorId], references: [id])
   members     ProjectMember[]
 }
@@ -779,15 +886,15 @@ enum ProjectStatus {
 }
 
 model ProjectMember {
-  id          Int           @id @default(autoincrement())
-  projectId   Int
-  userId      Int
-  role        ProjectRole
-  joinedDate  DateTime      @default(now())
-  
-  project     Project       @relation(fields: [projectId], references: [id])
-  user        User          @relation(fields: [userId], references: [id])
-  
+  id         Int         @id @default(autoincrement())
+  projectId  Int
+  userId     Int
+  role       ProjectRole
+  joinedDate DateTime    @default(now())
+
+  project    Project     @relation(fields: [projectId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
+
   @@unique([projectId, userId])
 }
 
@@ -798,31 +905,35 @@ enum ProjectRole {
   OBSERVER
 }
 
+// ---------------------------------------------------------------------------
+// SPONSORS
+// ---------------------------------------------------------------------------
+
 model Sponsor {
-  id                Int           @id @default(autoincrement())
-  organizationName  String
-  contactPerson     String
-  email             String
-  phone             String?
-  website           String?
-  logo              String?
-  description       String        @db.Text
-  partnershipStart  DateTime      @default(now())
-  
-  sponsorships      Sponsorship[]
+  id               Int           @id @default(autoincrement())
+  organizationName String
+  contactPerson    String
+  email            String
+  phone            String?
+  website          String?
+  logo             String?
+  description      String        @db.Text
+  partnershipStart DateTime      @default(now())
+
+  sponsorships     Sponsorship[]
 }
 
 model Sponsorship {
-  id          Int              @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   sponsorId   Int
   title       String
-  description String           @db.Text
-  amount      Decimal          @db.Decimal(10, 2)
+  description String          @db.Text
+  amount      Decimal         @db.Decimal(10, 2)
   type        SponsorshipType
   startDate   DateTime
   endDate     DateTime?
-  
-  sponsor     Sponsor          @relation(fields: [sponsorId], references: [id])
+
+  sponsor     Sponsor         @relation(fields: [sponsorId], references: [id])
 }
 
 enum SponsorshipType {
@@ -833,14 +944,18 @@ enum SponsorshipType {
   SCHOLARSHIP
 }
 
+// ---------------------------------------------------------------------------
+// ACHIEVEMENTS
+// ---------------------------------------------------------------------------
+
 model Achievement {
-  id            Int                @id @default(autoincrement())
-  title         String
-  description   String             @db.Text
-  badgeImage    String
-  points        Int
-  category      AchievementCategory
-  
+  id               Int                 @id @default(autoincrement())
+  title            String
+  description      String              @db.Text
+  badgeImage       String
+  points           Int
+  category         AchievementCategory
+
   userAchievements UserAchievement[]
 }
 
@@ -854,28 +969,32 @@ enum AchievementCategory {
 }
 
 model UserAchievement {
-  id            Int        @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   userId        Int
   achievementId Int
-  earnedDate    DateTime   @default(now())
-  
-  user          User       @relation(fields: [userId], references: [id])
+  earnedDate    DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id])
   achievement   Achievement @relation(fields: [achievementId], references: [id])
-  
+
   @@unique([userId, achievementId])
 }
 
+// ---------------------------------------------------------------------------
+// NOTIFICATIONS
+// ---------------------------------------------------------------------------
+
 model Notification {
-  id          Int              @id @default(autoincrement())
-  userId      Int
-  title       String
-  content     String           @db.Text
-  isRead      Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  type        NotificationType
-  actionUrl   String?
-  
-  user        User             @relation(fields: [userId], references: [id])
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String           @db.Text
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  type      NotificationType
+  actionUrl String?
+
+  user      User             @relation(fields: [userId], references: [id])
 }
 
 enum NotificationType {
@@ -887,17 +1006,21 @@ enum NotificationType {
   EVENT
 }
 
+// ---------------------------------------------------------------------------
+// RESOURCES
+// ---------------------------------------------------------------------------
+
 model Resource {
-  id          Int           @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
-  description String        @db.Text
+  description String       @db.Text
   fileUrl     String
   type        ResourceType
   uploaderId  Int
-  uploadDate  DateTime      @default(now())
-  isApproved  Boolean       @default(false)
-  
-  uploader    User          @relation(fields: [uploaderId], references: [id])
+  uploadDate  DateTime     @default(now())
+  isApproved  Boolean      @default(false)
+
+  uploader    User         @relation(fields: [uploaderId], references: [id])
 }
 
 enum ResourceType {
@@ -909,69 +1032,23 @@ enum ResourceType {
   CODE
 }
 
-model Assessment {
-  id              Int                     @id @default(autoincrement())
-  courseId        Int
-  title           String
-  description     String                  @db.Text
-  totalPoints     Int
-  passingPoints   Int
-  createdAt       DateTime                @default(now())
-  
-  course          Course                  @relation(fields: [courseId], references: [id])
-  questions       AssessmentQuestion[]
-  attempts        UserAssessmentAttempt[]
-}
-
-model AssessmentQuestion {
-  id              Int             @id @default(autoincrement())
-  assessmentId    Int
-  question        String          @db.Text
-  questionType    QuestionType
-  points          Int
-  orderNumber     Int
-  options         String?         @db.Text // JSON array of options
-  correctAnswer   String?         @db.Text // Could be a single value or JSON array
-  
-  assessment      Assessment      @relation(fields: [assessmentId], references: [id])
-}
-
-enum QuestionType {
-  MULTIPLE_CHOICE
-  SINGLE_CHOICE
-  TRUE_FALSE
-  SHORT_ANSWER
-  ESSAY
-  FILE_UPLOAD
-}
-
-model UserAssessmentAttempt {
-  id              Int         @id @default(autoincrement())
-  userId          Int
-  assessmentId    Int
-  score           Int
-  passed          Boolean
-  attemptDate     DateTime    @default(now())
-  attemptNumber   Int
-  answers         String?     @db.Text // JSON representation of answers
-  
-  user            User        @relation(fields: [userId], references: [id])
-  assessment      Assessment  @relation(fields: [assessmentId], references: [id])
-}
+// ---------------------------------------------------------------------------
+// FEEDBACK
+// ---------------------------------------------------------------------------
 
 model Feedback {
-  id            Int           @id @default(autoincrement())
-  providerId    Int
-  targetId      Int
-  targetType    FeedbackTarget
-  rating        Int
-  comment       String?       @db.Text
-  createdAt     DateTime      @default(now())
-  
-  provider      User          @relation("FeedbackProvider", fields: [providerId], references: [id])
-  
+  id         Int            @id @default(autoincrement())
+  providerId Int
+  targetId   Int
+  targetType FeedbackTarget
+  rating     Int
+  comment    String?        @db.Text
+  createdAt  DateTime       @default(now())
+
+  provider   User           @relation("FeedbackProvider", fields: [providerId], references: [id])
+
   @@index([providerId])
-  @@index([targetId, targetType]) // Add index for the polymorphic relation
+  @@index([targetId, targetType])
 }
 
 enum FeedbackTarget {
@@ -981,6 +1058,10 @@ enum FeedbackTarget {
   EVENT
   RESOURCE
 }
+
+// ---------------------------------------------------------------------------
+// MISC
+// ---------------------------------------------------------------------------
 
 model Subscriber {
   id        Int      @id @default(autoincrement())

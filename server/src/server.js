@@ -16,6 +16,8 @@ import rootRouter from "./routes/index.js";
 
 const app = express();
 
+// TODO: Migrate to Typescript
+
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

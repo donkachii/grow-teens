@@ -49,56 +49,29 @@ const courseRoutes = Router();
 courseRoutes.post(
   "/",
   [authMiddleware, adminMiddleware],
-  upload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "coverImage", maxCount: 1 },
-  ]),
+  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
   uploadToCloudinary,
   createCourse
 );
 
 courseRoutes.get("/view", getCourses);
-
 courseRoutes.get("/view/:id", getCourseById);
 
 courseRoutes.put(
   "/:id",
   [authMiddleware, adminMiddleware],
-  upload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "coverImage", maxCount: 1 },
-  ]),
+  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
   uploadToCloudinary,
   updateCourse
 );
 
 courseRoutes.delete("/:id", [authMiddleware, adminMiddleware], deleteCourse);
 
-// Module routes
-courseRoutes.post(
-  "/modules",
-  [authMiddleware, adminMiddleware],
-  upload.single("thumbnail"),
-  uploadToCloudinary,
-  createModule
-);
-
-courseRoutes.put(
-  "/modules/:id",
-  [authMiddleware, adminMiddleware],
-  upload.single("thumbnail"),
-  uploadToCloudinary,
-  updateModule
-);
-
-courseRoutes.delete(
-  "/modules/:id",
-  [authMiddleware, adminMiddleware],
-  deleteModule
-);
-
+// Module routes — no image upload (thumbnail removed from CourseModule)
+courseRoutes.post("/modules", [authMiddleware, adminMiddleware], createModule);
+courseRoutes.put("/modules/:id", [authMiddleware, adminMiddleware], updateModule);
+courseRoutes.delete("/modules/:id", [authMiddleware, adminMiddleware], deleteModule);
 courseRoutes.get("/modules/:id", getModuleById);
-
 courseRoutes.get("/modules", getModules);
 
 // Content unit routes
@@ -109,47 +82,21 @@ courseRoutes.post(
   uploadToCloudinary,
   createContentUnit
 );
-
-courseRoutes.get(
-  "/modules/:moduleId/units",
-  authMiddleware,
-  getContentUnitsByModule
-);
-
-courseRoutes.get(
-  "/units/:id",
-  authMiddleware,
-  getContentUnitById
-);
-
-courseRoutes.put(
-  "/units/:id",
-  [authMiddleware, adminMiddleware],
-  updateContentUnit
-);
-
-courseRoutes.delete(
-  "/units/:id",
-  [authMiddleware, adminMiddleware],
-  deleteContentUnit
-);
+courseRoutes.get("/modules/:moduleId/units", authMiddleware, getContentUnitsByModule);
+courseRoutes.get("/units/:id", authMiddleware, getContentUnitById);
+courseRoutes.put("/units/:id", [authMiddleware, adminMiddleware], updateContentUnit);
+courseRoutes.delete("/units/:id", [authMiddleware, adminMiddleware], deleteContentUnit);
 
 // Enrollment routes
 courseRoutes.post("/enroll", authMiddleware, enrollInCourse);
-
 courseRoutes.post("/unenroll", authMiddleware, unenrollFromCourse);
-
 courseRoutes.get("/enrolled", authMiddleware, getEnrolledCourses);
 
 // Progress tracking
 courseRoutes.post("/progress/unit", authMiddleware, updateUnitProgress);
 
-courseRoutes.get(
-  "/admin/view",
-  [authMiddleware, adminMiddleware],
-  getAdminCourses
-);
-
-courseRoutes.patch("/:id/publish", authMiddleware, toggleCoursePublish);
+// Admin routes
+courseRoutes.get("/admin/view", [authMiddleware, adminMiddleware], getAdminCourses);
+courseRoutes.patch("/:id/publish", [authMiddleware, adminMiddleware], toggleCoursePublish);
 
 export default courseRoutes;

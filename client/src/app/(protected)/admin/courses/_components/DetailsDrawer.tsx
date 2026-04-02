@@ -78,7 +78,6 @@ const DetailsDrawer = ({
         <Box position="relative" height="180px">
           <Image
             src={
-              selectedCourse?.coverImage ||
               selectedCourse?.thumbnail ||
               "https://via.placeholder.com/800x180?text=No+Cover+Image"
             }
@@ -125,22 +124,13 @@ const DetailsDrawer = ({
               <Text color={mutedTextColor}>{selectedCourse?.description}</Text>
             </Box>
 
-            {selectedCourse?.overview && (
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Overview
-                </Text>
-                <Text color={mutedTextColor}>{selectedCourse?.overview}</Text>
-              </Box>
-            )}
-
             <SimpleGrid columns={2} spacing={4}>
               <Box>
                 <Text fontWeight="medium" mb={1} color={textColor}>
-                  Type
+                  Category
                 </Text>
                 <Badge colorScheme="teal">
-                  {selectedCourse?.type.replace(/_/g, " ")}
+                  {selectedCourse?.category?.name || "N/A"}
                 </Badge>
               </Box>
 

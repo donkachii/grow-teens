@@ -14,7 +14,6 @@
   "license": "ISC",
   "description": "Node.js backend, prisma and JWT",
   "dependencies": {
-    "@prisma/client": "^6.6.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
@@ -28,7 +27,11 @@
     "openai": "^4.90.0"
   },
   "devDependencies": {
+    "@prisma/client": "^6.19.3",
     "nodemon": "^3.1.9",
-    "prisma": "^6.6.0"
+    "prisma": "^6.19.3"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

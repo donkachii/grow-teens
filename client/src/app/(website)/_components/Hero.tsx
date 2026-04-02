@@ -26,6 +26,8 @@ import HeroBg3 from "../../../../public/assets/images/hero-background3.svg";
 const Hero = () => {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [loadedSlideIndexes, setLoadedSlideIndexes] = useState(() => new Set<number>([0]));
   const { ref, inView } = useInView({
     threshold: 0.1,
     triggerOnce: true,
@@ -36,6 +38,19 @@ const Hero = () => {
       setIsVisible(true);
     }
   }, [inView]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setLoadedSlideIndexes((prev) => {
+        if (prev.has(1)) return prev;
+        const next = new Set(prev);
+        next.add(1);
+        return next;
+      });
+    }, 1200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   // Animation variants
   const containerVariant = {
@@ -75,8 +90,11 @@ const Hero = () => {
   };
 
   return (
-    <section id="home" className="relative h-screen px-[5%]" ref={ref} >
-      {/* Carousel Background with Overlay */}
+    <section id="home" className="relative h-screen px-[5%]" ref={ref}>
+      {/* Lightweight fallback background */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+
+      {/* Carousel Background */}
       <div className="absolute inset-0 z-0">
         <Swiper
           modules={[Autoplay, EffectFade, Pagination]}
@@ -97,44 +115,66 @@ const Hero = () => {
             },
           }}
           loop={true}
+          onSlideChange={(swiper) => {
+            const realIndex = swiper.realIndex ?? 0;
+            setActiveIndex(realIndex);
+            setLoadedSlideIndexes((prev) => {
+              if (prev.has(realIndex)) return prev;
+              const next = new Set(prev);
+              next.add(realIndex);
+              return next;
+            });
+          }}
           className="h-full w-full"
         >
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg1}
-                alt="Hero Background 1"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-                priority
-              />
+              {(activeIndex === 0 || loadedSlideIndexes.has(0)) && (
+                <Image
+                  src={HeroBg1}
+                  alt="Hero Background 1"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  priority
+                  fetchPriority="high"
+                />
+              )}
             </div>
           </SwiperSlide>
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg2}
-                alt="Hero Background 2"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-              />
+              {(activeIndex === 1 || loadedSlideIndexes.has(1)) && (
+                <Image
+                  src={HeroBg2}
+                  alt="Hero Background 2"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
           </SwiperSlide>
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg3}
-                alt="Hero Background 3"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-              />
+              {(activeIndex === 2 || loadedSlideIndexes.has(2)) && (
+                <Image
+                  src={HeroBg3}
+                  alt="Hero Background 3"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
           </SwiperSlide>
         </Swiper>
       </div>
+
+      {/* Readability overlay */}
+      <div className="absolute inset-0 z-[1] bg-black/55" />
 
       {/* Content */}
       <Container maxW="container.xl" mx="auto" h="full" position="relative" zIndex="10">

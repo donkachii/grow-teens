@@ -4,9 +4,8 @@ import { authOptions } from "@/lib/auth";
 import Dashboard from "./_components/Dashboard";
 
 const AdminDashboard = async () => {
-  const data: NextAuthUserSession | null = await getServerSession(authOptions);
+  await getServerSession(authOptions);
 
-  console.log("Data ", data);
   return (
     <div className="p-8">
         <Dashboard />
