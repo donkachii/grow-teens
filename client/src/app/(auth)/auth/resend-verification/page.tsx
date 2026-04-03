@@ -12,16 +12,22 @@ import {
   Text,
   VStack,
   Center,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
 import { NextAuthUserSession } from "@/types";
 import { handleServerErrorMessage } from "@/utils";
 
 export default function ResendVerification() {
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get("email") ?? "";
+  const justRegistered = searchParams.get("registered") === "true";
+
+  const [email, setEmail] = useState(prefilledEmail);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
@@ -72,12 +78,21 @@ export default function ResendVerification() {
       >
         <VStack spacing={4} align="stretch">
           <Heading size="lg" textAlign="center">
-            Resend Verification Email
+            {justRegistered ? "Check Your Email" : "Resend Verification Email"}
           </Heading>
 
+          {justRegistered && (
+            <Alert status="success" borderRadius="md">
+              <AlertIcon />
+              Registration successful! A verification link has been sent to{" "}
+              <strong>&nbsp;{prefilledEmail}</strong>. Please check your inbox.
+            </Alert>
+          )}
+
           <Text color="gray.600">
-            If your verification link has expired, enter your email below to
-            receive a new one.
+            {justRegistered
+              ? "Didn't receive the email? Click below to resend it."
+              : "If your verification link has expired, enter your email below to receive a new one."}
           </Text>
 
           <form onSubmit={handleResend}>

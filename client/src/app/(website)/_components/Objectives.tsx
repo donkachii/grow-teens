@@ -96,7 +96,7 @@ const Objectives = () => {
         direction="column"
         maxW="container.xl"
         mx="auto"
-        initial="hidden"
+        initial={false}
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
         variants={containerVariants}
@@ -111,7 +111,7 @@ const Objectives = () => {
         >
           <Box maxW={{ base: "100%", md: "50%" }}>
             <MotionBox
-              initial={{ x: -20, opacity: 0 }}
+              initial={false}
               whileInView={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
@@ -123,7 +123,7 @@ const Objectives = () => {
               size={{ base: "xl", md: "2xl" }}
               lineHeight="1.2"
               mb={4}
-              initial={{ y: 20, opacity: 0 }}
+              initial={false}
               whileInView={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
@@ -133,7 +133,7 @@ const Objectives = () => {
           
           <MotionBox
             maxW={{ base: "100%", md: "50%" }}
-            initial={{ y: 20, opacity: 0 }}
+            initial={false}
             whileInView={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
@@ -217,7 +217,7 @@ const Objectives = () => {
           justify={{ base: "center", md: "flex-start" }}
           mt={{ base: 6, md: 8 }}
           gap={4}
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
         >

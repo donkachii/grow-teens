@@ -76,7 +76,7 @@ const Newsletter = () => {
         borderRadius="full"
         bg="white"
         opacity={0.05}
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={false}
         whileInView={{ scale: 1, opacity: 0.05 }}
         // transition={{ duration: 1.2 }}
       />
@@ -89,7 +89,7 @@ const Newsletter = () => {
         borderRadius="full"
         bg="white"
         opacity={0.07}
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={false}
         whileInView={{ scale: 1, opacity: 0.07 }}
         // transition={{ duration: 1.5, delay: 0.2 }}
       />
@@ -104,7 +104,7 @@ const Newsletter = () => {
           <MotionBox
             maxW={{ base: "100%", md: "50%" }}
             textAlign={{ base: "center", md: "left" }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             // transition={{ duration: 0.6 }}
             viewport={{ once: true }}
@@ -125,7 +125,7 @@ const Newsletter = () => {
 
           <MotionBox
             w={{ base: "100%", md: "45%" }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             // transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}

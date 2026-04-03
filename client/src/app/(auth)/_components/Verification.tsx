@@ -64,7 +64,7 @@ export default function Verification() {
     }
 
     verify();
-  }, [token, verify, status]);
+  }, [token, verify]);
 
   if (status === "loading") {
     return (

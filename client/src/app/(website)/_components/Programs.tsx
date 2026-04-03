@@ -63,7 +63,7 @@ const Programs = () => {
           justify="space-between"
           align={{ base: "flex-start", lg: "flex-end" }}
           mb={{ base: 10, md: 14 }}
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
@@ -113,7 +113,7 @@ const Programs = () => {
               bg="white"
               boxShadow="md"
               height="100%"
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
@@ -167,7 +167,7 @@ const Programs = () => {
         <MotionFlex
           justify="center"
           mt={{ base: 10, md: 14 }}
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           viewport={{ once: true }}

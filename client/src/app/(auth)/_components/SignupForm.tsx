@@ -16,9 +16,8 @@ import {
   Select,
   Text,
 } from "@chakra-ui/react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ErrorMessage from "./ErrorMessage";
-import { signIn } from "next-auth/react";
 import requestClient from "@/lib/requestClient";
 import { handleServerErrorMessage } from "@/utils";
 
@@ -38,6 +37,7 @@ export default function SignupForm() {
     searchParams?.get("error") ?? null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -56,37 +56,13 @@ export default function SignupForm() {
         ...data,
         age: Number(data.age) || null,
       });
-      const { status, message } = response.data;
 
-      if (status === "error") {
-        setIsLoading(false);
-        return setErrorMessage(message);
-      }
-
-      const loginResponse = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        callbackUrl:
-          searchParams.get("callbackUrl") || `${window.location.origin}/`,
-        redirect: false,
-      });
-
-      if (!loginResponse) {
-        setErrorMessage("An unknown error occurred.");
+      if (response.status === 201) {
+        router.push(
+          `/auth/resend-verification?email=${encodeURIComponent(data.email)}&registered=true`
+        );
         return;
       }
-
-      if (loginResponse.error) {
-        setErrorMessage(loginResponse.error);
-        return;
-      }
-
-      if (loginResponse.ok && loginResponse.url) {
-        window.location.href = loginResponse.url;
-        return;
-      }
-
-      setErrorMessage(loginResponse.error);
     } catch (error: any) {
       setIsLoading(false);
       const errorMessage = handleServerErrorMessage(error);

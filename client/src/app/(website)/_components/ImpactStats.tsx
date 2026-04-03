@@ -37,7 +37,7 @@ const StatCounter = ({ value, label, suffix = "+", delay }: StatProps) => {
   return (
     <MotionBox
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
+      initial={false}
       whileInView={{ opacity: 1, y: 0 }}
       //   transition={{ duration: 0.6, delay }}
       viewport={{ once: true }}
@@ -90,7 +90,7 @@ const ImpactStats = () => {
         bg="primary.100"
         opacity={0.3}
         zIndex={0}
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={false}
         whileInView={{ scale: 1, opacity: 0.3 }}
         // transition={{ duration: 1.5 }}
       />
@@ -104,7 +104,7 @@ const ImpactStats = () => {
         bg="secondary.100"
         opacity={0.3}
         zIndex={0}
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={false}
         whileInView={{ scale: 1, opacity: 0.3 }}
         // transition={{ duration: 1.5 }}
       />
@@ -117,7 +117,7 @@ const ImpactStats = () => {
           mb={{ base: 10, md: 16 }}
         >
           <MotionBox
-            initial={{ opacity: 0, y: -20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             // transition={{ duration: 0.5 }}
             viewport={{ once: true }}
@@ -127,7 +127,7 @@ const ImpactStats = () => {
             </Text>
           </MotionBox>
           <MotionBox
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             // transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
@@ -138,7 +138,7 @@ const ImpactStats = () => {
             </Heading>
           </MotionBox>
           <MotionBox
-            initial={{ opacity: 0 }}
+            initial={false}
             whileInView={{ opacity: 1 }}
             // transition={{ duration: 0.5, delay: 0.4 }}
             viewport={{ once: true }}

@@ -35,7 +35,7 @@ const Partners = () => {
           justify="space-between"
           align={{ base: "flex-start", md: "flex-end" }}
           mb={{ base: 12, md: 16 }}
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
@@ -79,7 +79,7 @@ const Partners = () => {
               alignItems="center"
               justifyContent="center"
               height="100px"
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
@@ -104,7 +104,7 @@ const Partners = () => {
           borderRadius="xl"
           p={{ base: 6, md: 10 }}
           boxShadow="md"
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           viewport={{ once: true }}

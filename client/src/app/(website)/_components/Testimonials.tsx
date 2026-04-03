@@ -99,7 +99,7 @@ const Testimonials = () => {
           mb={{ base: 12, md: 16 }}
         >
           <MotionBox
-            initial={{ opacity: 0, y: -20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
@@ -113,7 +113,7 @@ const Testimonials = () => {
             </Text>
           </MotionBox>
           <MotionBox
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
@@ -132,7 +132,7 @@ const Testimonials = () => {
         <Flex direction="column" align="center">
           <MotionBox
             key={testimonials[currentIndex].id}
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={false}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}

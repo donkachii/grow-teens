@@ -66,6 +66,7 @@ export function Navbar() {
       setIsScrolled(window.scrollY > 50);
     };
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -110,7 +111,7 @@ export function Navbar() {
           {/* Navigation */}
           <HStack
             spacing={{ md: 4, lg: 8 }}
-            color={isScrolled ? "yellow.500" : "white"}
+            color={isScrolled ? "gray.800" : "white"}
             fontSize={{ md: "sm", lg: "md" }}
             fontWeight="bold"
             alignItems="center"
@@ -181,9 +182,11 @@ export function Navbar() {
               variant={"outline"}
               onClick={() => router.push("/auth/signin")}
               size={{ md: "sm", lg: "md" }}
+              color={isScrolled ? "gray.800" : "white"}
+              borderColor={isScrolled ? "gray.300" : "white"}
               _hover={{
-                bg: isScrolled ? "whiteAlpha.200" : "whiteAlpha.200",
-                color: "white",
+                bg: isScrolled ? "gray.100" : "whiteAlpha.200",
+                color: isScrolled ? "gray.800" : "white",
               }}
             >
               Sign in
@@ -222,8 +225,8 @@ export function Navbar() {
             icon={<RxHamburgerMenu />}
             variant="ghost"
             onClick={onToggle}
-            color="white"
-            _hover={{ bg: "whiteAlpha.200" }}
+            color={isScrolled ? "gray.800" : "white"}
+            _hover={{ bg: isScrolled ? "gray.100" : "whiteAlpha.200" }}
           />
         </Box>
       </Container>

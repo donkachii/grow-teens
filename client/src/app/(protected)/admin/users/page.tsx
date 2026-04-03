@@ -55,6 +55,7 @@ import {
 import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
 import { NextAuthUserSession } from "@/types";
+import { handleServerErrorMessage } from "@/utils";
 
 interface UserPagination {
   total: number;
@@ -134,12 +135,10 @@ const UsersPage = () => {
 
         setUsers(response.data.users);
         setPagination(response.data.pagination);
-      } catch (err: any) {
-        console.error("Error fetching users:", err);
-        setError(err.response?.data?.error || "Failed to fetch users");
-
-        toast.error(err.response?.data?.error || "Failed to fetch users");
-
+      } catch (err) {
+        const message = handleServerErrorMessage(err);
+        setError(message);
+        toast.error(message);
         setUsers([]);
       } finally {
         setIsLoading(false);
@@ -164,8 +163,8 @@ const UsersPage = () => {
       );
 
       fetchUsers(pagination.page);
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || `Failed to update user status`);
+    } catch (err) {
+      toast.error(handleServerErrorMessage(err));
     } finally {
       setIsStatusDialogOpen(false);
       setSelectedUser(null);
@@ -183,8 +182,8 @@ const UsersPage = () => {
         toast.success(`User role has been updated to ${role}`);
 
         fetchUsers(pagination.page);
-      } catch (err: any) {
-        toast.error(err.response?.data?.error || `Failed to update user role`);
+      } catch (err) {
+        toast.error(handleServerErrorMessage(err));
       }
     },
     [sessionData, fetchUsers, pagination.page]
