@@ -64,7 +64,7 @@ const CtaSection = () => {
         gap={{ base: 12, lg: 6 }}
       >
         <MotionBox
-          initial={{ opacity: 0, x: -30 }}
+          initial={false}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
@@ -93,7 +93,7 @@ const CtaSection = () => {
             direction={{ base: "column", sm: "row" }}
             gap={4}
             justify={{ base: "center", lg: "flex-start" }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={false}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             viewport={{ once: true }}
@@ -124,7 +124,7 @@ const CtaSection = () => {
 
         {!isMobile && (
           <MotionBox
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={false}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}

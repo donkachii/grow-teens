@@ -25,7 +25,7 @@ import HeroBg3 from "../../../../public/assets/images/hero-background3.svg";
 
 const Hero = () => {
   const router = useRouter();
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loadedSlideIndexes, setLoadedSlideIndexes] = useState(() => new Set<number>([0]));
   const { ref, inView } = useInView({
@@ -186,7 +186,7 @@ const Hero = () => {
           align={{ base: "center", lg: "flex-start" }}
           textAlign={{ base: "center", lg: "left" }}
           pt={{ base: "20", md: "0" }}
-          initial="hidden"
+          initial={false}
           animate={isVisible ? "visible" : "hidden"}
           variants={containerVariant}
         >
@@ -232,7 +232,7 @@ const Hero = () => {
                 onClick={() => router.push("/auth/signup")}
                 variants={buttonVariant}
                 whileHover="hover"
-                initial="hidden"
+                initial={false}
                 animate={isVisible ? "visible" : "hidden"}
               >
                 Join Our Community
@@ -248,7 +248,7 @@ const Hero = () => {
                 _hover={{ bg: "whiteAlpha.200" }}
                 onClick={() => router.push("/#about")}
                 variants={buttonVariant}
-                initial="hidden"
+                initial={false}
                 animate={isVisible ? "visible" : "hidden"}
               >
                 Learn More
