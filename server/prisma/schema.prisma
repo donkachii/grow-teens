@@ -32,6 +32,7 @@ model User {
   verificationToken    String?                 @unique
   verificationExpires  DateTime?
   lastActive           DateTime?
+  canvasId             String?
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
 
@@ -152,6 +153,7 @@ model Course {
   startDate       DateTime?
   endDate         DateTime?
   enrollmentLimit Int?
+  canvasId        String?
   tags            String[]
   outcomes        String[]
   requirements    String[]
@@ -187,6 +189,7 @@ model CourseModule {
   orderNumber     Int
   isPublished     Boolean          @default(false)
   estimatedHours  Int?
+  canvasId        String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -336,6 +339,8 @@ model Quiz {
   showCorrectAnswers Boolean        @default(true)
   orderNumber        Int
   isPublished        Boolean        @default(false)
+  canvasId           String?
+  canvasAssignmentId String?
 
   module             CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   questions          QuizQuestion[]
@@ -410,6 +415,7 @@ model Exercise {
   dueDate              DateTime?
   allowLateSubmissions Boolean              @default(true)
   maxScore             Int                  @default(100)
+  canvasId             String?
 
   module               CourseModule         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   submissions          ExerciseSubmission[]
@@ -456,6 +462,7 @@ model Assessment {
   description   String                  @db.Text
   totalPoints   Int
   passingPoints Int
+  canvasId      String?
   createdAt     DateTime                @default(now())
 
   course        Course                  @relation(fields: [courseId], references: [id])
@@ -1069,6 +1076,38 @@ model Subscriber {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// CANVAS LMS INTEGRATION
+// ---------------------------------------------------------------------------
+
+model CanvasConfig {
+  id        Int      @id @default(autoincrement())
+  domain    String   // e.g. "myschool.instructure.com"
+  apiToken  String   // Canvas API token (stored securely)
+  accountId String   @default("1") // Root Canvas account ID
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CanvasSyncLog {
+  id          Int        @id @default(autoincrement())
+  operation   String     // "IMPORT_COURSES", "PUSH_COURSE", "SYNC_ENROLLMENTS"
+  status      SyncStatus
+  details     String?    @db.Text
+  error       String?    @db.Text
+  recordCount Int?
+  createdAt   DateTime   @default(now())
+  completedAt DateTime?
+}
+
+enum SyncStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
 }
 
 enum StatusType {
