@@ -1,11 +1,6 @@
-import React, { useEffect } from "react";
-import {
-  Controller,
-  Control,
-  UseFormSetValue,
-  UseFormWatch,
-} from "react-hook-form";
-import { FormControl, FormLabel } from "@chakra-ui/react";
+import { useEffect } from "react";
+import { Controller, type Control, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
+
 import DateComponent from "./DateComponent";
 
 interface IFormInput {
@@ -14,14 +9,13 @@ interface IFormInput {
 }
 
 interface DateRangeProps {
-  fromName: keyof IFormInput; //  "startDate"
-  toName: keyof IFormInput; //  "endDate"
+  fromName: keyof IFormInput;
+  toName: keyof IFormInput;
   control: Control<IFormInput>;
   watch: UseFormWatch<IFormInput>;
   setValue: UseFormSetValue<IFormInput>;
   labelFrom?: string;
   labelTo?: string;
-  // If you want to control min/max logic on "From" date or "To" date,
 }
 
 const DateRange: React.FC<DateRangeProps> = ({
@@ -44,8 +38,10 @@ const DateRange: React.FC<DateRangeProps> = ({
 
   return (
     <>
-      <FormControl>
-        <FormLabel>{labelFrom}</FormLabel>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-800">
+          {labelFrom}
+        </label>
         <Controller
           name={fromName}
           control={control}
@@ -57,10 +53,12 @@ const DateRange: React.FC<DateRangeProps> = ({
             />
           )}
         />
-      </FormControl>
+      </div>
 
-      <FormControl>
-        <FormLabel>{labelTo}</FormLabel>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-gray-800">
+          {labelTo}
+        </label>
         <Controller
           name={toName}
           control={control}
@@ -73,7 +71,7 @@ const DateRange: React.FC<DateRangeProps> = ({
             />
           )}
         />
-      </FormControl>
+      </div>
     </>
   );
 };

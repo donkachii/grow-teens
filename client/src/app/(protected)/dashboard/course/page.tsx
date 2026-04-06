@@ -2,11 +2,11 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Box, Grid, Heading, Text, useDisclosure } from "@chakra-ui/react";
-import ProgramCard from "../../_components/ProgramCard";
-import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
+
+import requestClient from "@/lib/requestClient";
 import { NextAuthUserSession } from "@/types";
+import ProgramCard from "../../_components/ProgramCard";
 import EnrollCourseModal from "../_components/EnrollCourseModal";
 
 interface Course {
@@ -19,48 +19,79 @@ interface Course {
   enrollDate?: string;
 }
 
+interface EnrollmentProgram {
+  id: number;
+  programId: number;
+  statusType?: "PENDING" | "ACTIVE" | "COMPLETED";
+  program?: Course | null;
+}
+
 const TeensCoursesPage = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [enrolledProgram, setEnrolledProgram] = useState<any | null>(null);
+  const [enrolledProgram, setEnrolledProgram] = useState<EnrollmentProgram[]>(
+    []
+  );
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseError, setCourseError] = useState<string | null>(null);
+  const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const session = useSession();
   const sessionData = session.data as NextAuthUserSession;
 
-  // Fetch Courses from API
   const fetchCourses = useCallback(() => {
     startTransition(async () => {
       try {
+        setCourseError(null);
         const response = await requestClient({
           token: sessionData?.user?.token,
         }).get("/programs");
+        const programList = Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+
         if (!response.data) {
+          setCourses([]);
+          setCourseError("No course data is available right now.");
           return;
         }
-        setCourses(response.data?.data);
+
+        setCourses(programList);
       } catch (error) {
         console.error("Error fetching courses:", error);
+        setCourses([]);
+        setCourseError("Unable to load courses at the moment.");
       }
     });
   }, [sessionData?.user?.token]);
 
-  const fetchEnrolledProgram = useCallback((userId: any) => {
-    startTransition(async () => {
-      try {
-        const response = await requestClient({
-          token: sessionData?.user?.token,
-        }).get(`/enrollments/${userId}`);
-        if (!response.data) {
-          return;
+  const fetchEnrolledProgram = useCallback(
+    (userId: any) => {
+      startTransition(async () => {
+        try {
+          setEnrollmentError(null);
+          const response = await requestClient({
+            token: sessionData?.user?.token,
+          }).get(`/enrollments/${userId}`);
+          const enrollmentList = Array.isArray(response.data) ? response.data : [];
+
+          if (!response.data) {
+            setEnrolledProgram([]);
+            setEnrollmentError("No enrollment data is available right now.");
+            return;
+          }
+
+          setEnrolledProgram(enrollmentList);
+        } catch (error) {
+          console.error("Error fetching enrollments:", error);
+          setEnrolledProgram([]);
+          setEnrollmentError("Unable to load your enrolled programs right now.");
         }
-        setEnrolledProgram(response.data);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      }
-    });
-  }, [sessionData?.user?.token]);
+      });
+    },
+    [sessionData?.user?.token]
+  );
 
   useEffect(() => {
     if (sessionData?.user) {
@@ -74,77 +105,78 @@ const TeensCoursesPage = () => {
     }
   }, [fetchEnrolledProgram, sessionData]);
 
-  console.log("Enrolled Programs ", enrolledProgram);
-
-  console.log("Programs ", courses);
-
   const handleCourseClick = (course: Course) => {
     setSelectedCourse(course);
-    onOpen();
+    setIsOpen(true);
   };
 
+  const validEnrolledPrograms = enrolledProgram.filter(
+    (program) => program?.program?.id
+  );
+
   return (
-    <Box p={6}>
-      <Box pb={6}>
-        <Heading size="lg" mb={6}>
+    <div className="space-y-8 p-6">
+      <section className="pb-2">
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">
           My Learning Path and Courses
-        </Heading>
+        </h1>
 
         {isPending ? (
-          <Text>Loading courses...</Text>
+          <p className="text-gray-600">Loading courses...</p>
         ) : (
           <>
-            {enrolledProgram?.length === 0 && (
-              <Text>No enrolled programs available</Text>
+            {enrollmentError && (
+              <p className="mb-4 text-sm text-red-500">{enrollmentError}</p>
             )}
-            <Grid
-              templateColumns={{
-                base: "repeat(1, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              }}
-              gap={6}
-            >
-              {enrolledProgram &&
-                enrolledProgram.map((program: any) => {
-                  const programData = program.program;
-                  return (
-                    <ProgramCard
-                      key={program.id}
-                      id={program.programId}
-                      programs={program}
-                      image={programData.image}
-                      title={programData.title}
-                      statusType={program.statusType}
-                      description={programData.description}
-                      onEnroll={() => handleCourseClick(programData)}
-                    />
-                  );
-                })}
-            </Grid>
+            {!enrollmentError && enrolledProgram.length === 0 && (
+              <p className="text-gray-600">No enrolled programs available</p>
+            )}
+            {!enrollmentError &&
+              enrolledProgram.length > 0 &&
+              validEnrolledPrograms.length === 0 && (
+                <p className="text-gray-600">No valid enrolled program data found.</p>
+              )}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {validEnrolledPrograms.map((program) => {
+                const programData = program.program;
+
+                if (!programData) return null;
+
+                return (
+                  <ProgramCard
+                    key={program.id}
+                    id={program.programId}
+                    programs={program}
+                    image={programData.image}
+                    title={programData.title}
+                    statusType={program.statusType}
+                    description={programData.description}
+                    onEnroll={() => handleCourseClick(programData)}
+                  />
+                );
+              })}
+            </div>
           </>
         )}
-      </Box>
+      </section>
 
-      <Box>
-        <Heading size="lg" mb={6}>
+      <section>
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">
           Featured Courses and Programs
-        </Heading>
+        </h2>
 
         {isPending ? (
-          <Text>Loading courses...</Text>
+          <p className="text-gray-600">Loading courses...</p>
         ) : (
           <>
-            {courses?.length === 0 && <Text>No courses available</Text>}
+            {courseError && (
+              <p className="mb-4 text-sm text-red-500">{courseError}</p>
+            )}
+            {!courseError && courses.length === 0 && (
+              <p className="text-gray-600">No courses available</p>
+            )}
 
-            <Grid
-              templateColumns={{
-                base: "repeat(1, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              }}
-              gap={6}
-            >
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {courses.map((course) => (
                 <ProgramCard
                   key={course.id}
@@ -157,20 +189,19 @@ const TeensCoursesPage = () => {
                   onEnroll={() => handleCourseClick(course)}
                 />
               ))}
-            </Grid>
+            </div>
           </>
         )}
-      </Box>
+      </section>
 
-      {/* Course Modal */}
       {selectedCourse && (
         <EnrollCourseModal
           isOpen={isOpen}
-          onClose={onClose}
+          onClose={() => setIsOpen(false)}
           selectedCourse={selectedCourse}
         />
       )}
-    </Box>
+    </div>
   );
 };
 

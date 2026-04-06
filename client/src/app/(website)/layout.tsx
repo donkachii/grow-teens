@@ -1,3 +1,5 @@
+"use client";
+
 import Footer from "./_components/Footer";
 import { Navbar } from "./_components/Navbar";
 
@@ -9,7 +11,7 @@ export default function PageLayout({
   return (
     <>
       <Navbar />
-      {children}
+      <main>{children}</main>
       <Footer />
     </>
   );

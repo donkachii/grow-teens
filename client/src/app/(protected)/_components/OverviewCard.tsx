@@ -1,23 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Card, CardBody, CardHeader, Flex, Text } from "@chakra-ui/react";
-import React from "react";
 
-const OverviewCard = ({item}: {item: any}) => {
+const OverviewCard = ({ item }: { item: any }) => {
   return (
-    <Card key={item.id} borderRadius="lg" p={6} gap={6}>
-      <CardHeader p={0} fontSize="md" fontWeight="md">
-        {item.title}
-      </CardHeader>
-      <CardBody
-        p={0}
-        fontSize={{ base: "x-large", md: "2xl", lg: "4xl" }}
-        fontWeight="semibold"
-      >
-        <Flex gap={2} alignItems="center">
-          <Text>{item.value}</Text>
-        </Flex>
-      </CardBody>
-    </Card>
+    <article className="rounded-lg bg-white p-6 shadow-sm">
+      <div className="mb-6 text-base font-medium text-gray-700">{item.title}</div>
+      <div className="flex items-center gap-2">
+        <p className="text-3xl font-semibold text-gray-900 lg:text-5xl">
+          {item.value}
+        </p>
+      </div>
+    </article>
   );
 };
 

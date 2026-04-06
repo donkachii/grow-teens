@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Text } from "@chakra-ui/react";
 import Image from "next/image";
-import React from "react";
 import { BiLogoDribbble, BiLogoLinkedinSquare } from "react-icons/bi";
 import { FaXTwitter } from "react-icons/fa6";
-import aboutImage from "@public/assets/images/about-us.jpg";
+
+import aboutImage from "../../../../../public/assets/images/about-us.jpg";
 
 interface TeamMember {
   id: number;
@@ -25,8 +24,7 @@ export function About() {
       title: "Program Director",
       description:
         "John leads our programs, ensuring impactful training for African youth.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -39,8 +37,7 @@ export function About() {
       title: "Mentorship Coordinator",
       description:
         "Jane connects mentors with teens, fostering growth and development.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -53,8 +50,7 @@ export function About() {
       title: "Marketing Specialist",
       description:
         "Michael crafts our message to inspire and engage the youth.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -67,8 +63,7 @@ export function About() {
       title: "Tech Advisor",
       description:
         "Sarah guides our tech initiatives, ensuring modern skills are taught.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -81,8 +76,7 @@ export function About() {
       title: "Finance Manager",
       description:
         "David manages our budget, ensuring resources are allocated effectively.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -95,8 +89,7 @@ export function About() {
       title: "Content Creator",
       description:
         "Emily creates engaging content to promote our mission and programs.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -109,8 +102,7 @@ export function About() {
       title: "Community Liaison",
       description:
         "Chris builds partnerships with local organizations to enhance our outreach.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -123,8 +115,7 @@ export function About() {
       title: "Join us",
       description:
         "Be part of our mission to empower African youth through skills and mentorship.",
-      image:
-        "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
+      image: "https://d22po4pjz3o32e.cloudfront.net/placeholder-image.svg",
       social: [
         { icon: <BiLogoLinkedinSquare className="size-6" />, link: "#" },
         { icon: <FaXTwitter className="size-6 p-0.5" />, link: "#" },
@@ -139,14 +130,15 @@ export function About() {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 gap-y-12 md:grid-cols-2 md:items-center md:gap-x-12 lg:gap-x-20">
             <div>
-              <Text mb={3} className="mb-3 font-semibold text-3xl text-primary-600">
+              <h2 className="mb-3 text-3xl font-semibold text-primary-600">
                 Our Journey: Empowering Africa&apos;s Future Leaders
-              </Text>
-              <p className="md:text-md">
-                Founded with a vision to transform the lives of African teenagers,
-                GrowTeens is dedicated to equipping youth with essential skills for
-                the modern workforce. Our goal is to foster a generation of innovative
-                leaders who can thrive in a rapidly changing global economy.
+              </h2>
+              <p className="text-gray-700 md:text-base">
+                Founded with a vision to transform the lives of African
+                teenagers, GrowTeens is dedicated to equipping youth with
+                essential skills for the modern workforce. Our goal is to foster
+                a generation of innovative leaders who can thrive in a rapidly
+                changing global economy.
               </p>
             </div>
             <div>
@@ -163,10 +155,8 @@ export function About() {
       </section>
 
       <div className="container mx-auto">
-        <div className="mx-auto mb-12 max-w-lg text-center md:mb-18 lg:mb-20">
-          <Text mb={5} fontSize="5xl" className="text-primary-600">
-            Our Team
-          </Text>
+        <div className="mx-auto mb-12 max-w-lg text-center">
+          <h3 className="mb-5 text-5xl font-bold text-primary-600">Our Team</h3>
           <p className="md:text-lg">
             Meet the passionate individuals driving our mission forward.
           </p>
@@ -177,15 +167,17 @@ export function About() {
               <div className="relative mb-5 size-full overflow-hidden pt-[66%] md:mb-6 md:pt-[100%]">
                 <img
                   src={member.image}
-                  alt="Team member"
+                  alt={member.name}
                   className="absolute inset-0 size-full object-cover"
                 />
               </div>
               <div className="mb-3 md:mb-4">
-                <h5 className="text-md font-semibold md:text-lg">{member.name}</h5>
+                <h5 className="text-md font-semibold md:text-lg">
+                  {member.name}
+                </h5>
                 <h6 className="md:text-md">{member.title}</h6>
               </div>
-              <p>{member.description}</p>
+              <p className="text-gray-700">{member.description}</p>
               <div className="mt-6 grid grid-flow-col grid-cols-[max-content] gap-3.5 self-center">
                 {member.social.map((socialItem, index) => (
                   <a key={index} href={socialItem.link}>

@@ -15,7 +15,7 @@ type UnitProgressData = { unitId: number; courseId: number; completed?: boolean;
 // Parameter types for lists
 type BaseListParams = { page?: number | string; limit?: number | string; sortBy?: string; order?: 'asc' | 'desc'; };
 type UserListParams = BaseListParams & { search?: string; role?: string; status?: string; };
-type CourseListParams = BaseListParams & { search?: string; type?: string; difficulty?: string; };
+type CourseListParams = BaseListParams & { search?: string; categoryId?: number | string; difficulty?: string; };
 export type AdminCourseListParams = CourseListParams & { isPublished?: boolean | string; isFeatured?: boolean | string; };
 type ModuleListParams = BaseListParams & { courseId: number | string; };
 type ContentUnitListParams = BaseListParams & { moduleId: number | string; };
@@ -73,13 +73,13 @@ export const userService = {
     return requestClient({ token }).put('/users/me', data);
   },
   getAllUsersAdmin: (token: string, params: UserListParams = {}): Promise<PaginatedResponse<User>> => {
-    return requestClient({ token }).get('/users/admin', { params });
+    return requestClient({ token }).get('/users', { params });
   },
   updateUserStatusAdmin: (token: string, userId: number, data: { status: 'active' | 'pending' }): Promise<MessageResponse> => {
     return requestClient({ token }).patch(`/users/${userId}/status`, data);
   },
   updateUserRoleAdmin: (token: string, userId: number, data: { role: string }): Promise<MessageResponse> => {
-    return requestClient({ token }).put(`/users/${userId}/role`, data);
+    return requestClient({ token }).patch(`/users/${userId}/role`, data);
   },
 };
 
@@ -167,6 +167,64 @@ export const contentUnitService = {
   },
   deleteContentUnit: (token: string, id: number | string): Promise<MessageResponse> => {
     return requestClient({ token }).delete(`/courses/units/${id}`);
+  },
+};
+
+// --- Category Service ---
+export type Category = { id: number; name: string; slug: string; description?: string; icon?: string; };
+
+export const categoryService = {
+  getCategories: (): Promise<Category[]> => {
+    return requestClient().get('/categories');
+  },
+  createCategory: (token: string, data: Omit<Category, 'id' | 'slug'>): Promise<Category> => {
+    return requestClient({ token }).post('/categories', data);
+  },
+  deleteCategory: (token: string, id: number | string): Promise<void> => {
+    return requestClient({ token }).delete(`/categories/${id}`);
+  },
+};
+
+// --- Program Service ---
+export type ProgramCourseLink = {
+  id: number;
+  orderNumber: number;
+  course: { id: number; title: string; slug: string; thumbnail?: string };
+};
+
+export type Program = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  thumbnail?: string;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  courses: ProgramCourseLink[];
+};
+
+export const programService = {
+  getPrograms: (token: string): Promise<{ count: number; data: Program[] }> => {
+    return requestClient({ token }).get('/programs');
+  },
+  getProgramById: (token: string, id: number | string): Promise<Program> => {
+    return requestClient({ token }).get(`/programs/${id}`);
+  },
+  createProgram: (token: string, formData: FormData): Promise<Program> => {
+    return requestClient({ token }).post('/programs', formData);
+  },
+  updateProgram: (token: string, id: number | string, formData: FormData): Promise<Program> => {
+    return requestClient({ token }).put(`/programs/${id}`, formData);
+  },
+  deleteProgram: (token: string, id: number | string): Promise<void> => {
+    return requestClient({ token }).delete(`/programs/${id}`);
+  },
+  addCourse: (token: string, programId: number | string, data: { courseId: number; orderNumber?: number }): Promise<ProgramCourseLink> => {
+    return requestClient({ token }).post(`/programs/${programId}/courses`, data);
+  },
+  removeCourse: (token: string, programId: number | string, courseId: number | string): Promise<void> => {
+    return requestClient({ token }).delete(`/programs/${programId}/courses/${courseId}`);
   },
 };
 

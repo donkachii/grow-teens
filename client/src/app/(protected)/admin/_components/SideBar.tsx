@@ -1,133 +1,128 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Box } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { HomeIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { LuFileText } from "react-icons/lu";
 import { IoSettingsOutline } from "react-icons/io5";
-import { HomeIcon } from "@heroicons/react/24/outline";
-import { classNames } from "@/utils";
-import { usePathname } from "next/navigation";
-import { GiBullseye } from "react-icons/gi";
-import {
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerOverlay,
-  IconButton,
-} from "@chakra-ui/react";
-import { useBreakpointValue } from "@chakra-ui/react";
 import { RxHamburgerMenu } from "react-icons/rx";
-import Link from "next/link";
 import { BiMessageDetail } from "react-icons/bi";
-import { FiBookOpen, FiUsers } from "react-icons/fi";
+import { FiBookOpen, FiLink, FiUsers } from "react-icons/fi";
+import { GiBullseye } from "react-icons/gi";
+
+import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: "Dashboard", href: "/admin", icon: HomeIcon, current: true },
-  { name: "User Management", href: "/admin/users", icon: FiUsers, current: false },
-  { name: "Program Management", href: "/admin/program", icon: LuFileText, current: false },
-  { name: "Course Management", href: "/admin/courses", icon: FiBookOpen, current: false },
-  { name: "Sponsorship Management", href: "/admin/sponsorship", icon: GiBullseye, current: false },
-  {
-    name: "Message",
-    href: "/admin/messages",
-    icon: BiMessageDetail,
-    current: false,
-  },
-  {
-    name: "Settings",
-    href: "/admin/settings",
-    icon: IoSettingsOutline,
-    current: false,
-  },
+  { name: "Dashboard", href: "/admin", icon: HomeIcon },
+  { name: "User Management", href: "/admin/users", icon: FiUsers },
+  { name: "Program Management", href: "/admin/program", icon: LuFileText },
+  { name: "Course Management", href: "/admin/courses", icon: FiBookOpen },
+  { name: "Canvas Integration", href: "/admin/canvas", icon: FiLink },
+  { name: "Sponsorship Management", href: "/admin/sponsorship", icon: GiBullseye },
+  { name: "Message", href: "/admin/messages", icon: BiMessageDetail },
+  { name: "Settings", href: "/admin/settings", icon: IoSettingsOutline },
 ];
 
-const smVariant = { navigation: "drawer", navigationButton: true };
-const mdVariant = { navigation: "sidebar", navigationButton: false };
-
-const SideBar = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-
-  const variants = useBreakpointValue({ base: smVariant, md: mdVariant });
-
-  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
-
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
-
-  return variants?.navigation === "drawer" ? (
-    <>
-      <Box p={4}>
-        <IconButton
-          variant="outline"
-          aria-label="Menu"
-          icon={<RxHamburgerMenu />}
-          onClick={toggleSidebar}
-        />
-      </Box>
-
-      <Drawer isOpen={isSidebarOpen} placement="left" onClose={toggleSidebar}>
-        <DrawerOverlay>
-          <DrawerContent>
-            <DrawerCloseButton />
-            <DrawerBody>
-              <SidebarContent pathname={pathname} />
-            </DrawerBody>
-          </DrawerContent>
-        </DrawerOverlay>
-      </Drawer>
-    </>
-  ) : (
-    <Box
-      display={{ base: "none", lg: "flex" }}
-      mt={{ lg: "98px" }}
-      position="fixed"
-      zIndex={50}
-      w="72"
-      h="calc(100vh - 98px)"
-    >
-      <SidebarContent pathname={pathname} />
-    </Box>
-  );
-};
-
-export default SideBar;
-
-const SidebarContent = ({ pathname }: { pathname: string }) => (
-  <Box className="flex grow flex-col gap-y-5 md:overflow-y-auto bg-white md:px-6 pb-4 pt-8 md:border-r border-gray-200">
+const SidebarContent = ({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) => (
+  <div className="flex h-full grow flex-col gap-y-5 overflow-y-auto bg-white px-4 pb-4 pt-8 md:px-6 lg:border-r lg:border-gray-200">
     <nav className="flex flex-1 flex-col">
-      <ul role="list" className="-mx-2 space-y-8">
+      <ul role="list" className="space-y-3">
         {navigation.map((item) => {
-          const isActive = item.href === pathname;
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
 
           return (
             <li key={item.name}>
               <Link
                 href={item.href}
-                className={classNames(
+                onClick={onNavigate}
+                className={cn(
+                  "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors",
                   isActive
-                    ? "bg-primary-200 text-primary-500 p-0.5"
-                    : "text-gray-500 px-3",
-                  "group group-hover:bg-primary-200 flex gap-x-3 items-center rounded-md text-sm font-semibold leading-6"
+                    ? "bg-primary-100 text-primary-600"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 )}
               >
-                <item.icon
-                  aria-label={item.name}
-                  className={classNames(
+                <span
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                     isActive
-                      ? "text-white bg-primary-500 rounded-full p-2 w-10 h-10"
-                      : "text-gray-500 h-6 w-6"
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-500 group-hover:bg-white"
                   )}
-                />
-                {item.name}
+                >
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span>{item.name}</span>
               </Link>
             </li>
           );
         })}
       </ul>
     </nav>
-  </Box>
+  </div>
 );
+
+const SideBar = () => {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  return (
+    <>
+      <div className="fixed left-4 top-5 z-[60] lg:hidden">
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={() => setSidebarOpen(true)}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+        >
+          <RxHamburgerMenu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-[70] lg:hidden">
+          <button
+            type="button"
+            aria-label="Close menu overlay"
+            onClick={() => setSidebarOpen(false)}
+            className="absolute inset-0 bg-gray-900/40"
+          />
+          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-xl">
+            <div className="flex items-center justify-end p-4">
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setSidebarOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-600 transition-colors hover:bg-gray-100"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => setSidebarOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      <aside className="fixed left-0 top-[98px] z-50 hidden h-[calc(100vh-98px)] w-72 lg:flex">
+        <SidebarContent pathname={pathname} />
+      </aside>
+    </>
+  );
+};
+
+export default SideBar;

@@ -1,5 +1,4 @@
-import { Badge, Flex, Text } from "@chakra-ui/react";
-import React from "react";
+import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
   status: string;
@@ -10,21 +9,20 @@ interface StatusBadgeProps {
 
 const StatusBadge = ({ status, bgColor, color, isDot }: StatusBadgeProps) => {
   return (
-    <Badge
-      bgColor={bgColor}
-      px={2}
-      py={1}
-      rounded="2xl"
-      textTransform="none"
-      fontWeight="medium"
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium"
+      )}
+      style={{ backgroundColor: bgColor }}
     >
-      <Flex gap={2} alignItems="center" borderRadius="lg">
-        {!isDot && <Badge bgColor={color} p={1} rounded="lg" />}
-        <Text color={color} fontSize="xs">
-          {status}
-        </Text>
-      </Flex>
-    </Badge>
+      {!isDot && (
+        <span
+          className="inline-flex h-2 w-2 rounded-full"
+          style={{ backgroundColor: color }}
+        />
+      )}
+      <span style={{ color }}>{status}</span>
+    </span>
   );
 };
 

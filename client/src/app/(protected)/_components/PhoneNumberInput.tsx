@@ -1,14 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { Controller, Control, FieldErrors } from "react-hook-form";
-import {
-  FormControl,
-  FormLabel,
-  Input,
-  FormErrorMessage,
-  Text,
-  InputProps,
-} from "@chakra-ui/react";
+import { Controller, type Control, type FieldErrors } from "react-hook-form";
+
+import Input, { type InputProps } from "@/components/ui/Input";
 
 interface PhoneNumberInputProps extends InputProps {
   name: string;
@@ -39,18 +33,17 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         ...validationRules,
       }}
       render={({ field }) => (
-        <FormControl isInvalid={!!errors[name]}>
-          <FormLabel htmlFor={name}>
-            {label}{" "}
-            {isRequired && (
-              <Text as="span" color="red.500">
-                *
-              </Text>
-            )}
-          </FormLabel>
+        <div>
+          <label
+            htmlFor={name}
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            {label} {isRequired && <span className="text-error-500">*</span>}
+          </label>
           <Input
             {...field}
             id={name}
+            hasError={!!errors[name]}
             placeholder={placeholder || `Enter your ${label.toLowerCase()}`}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const value = e.target.value;
@@ -59,10 +52,12 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
             }}
             {...rest}
           />
-          <FormErrorMessage>
-            {errors[name]?.message ? errors[name].message.toString() : ""}
-          </FormErrorMessage>
-        </FormControl>
+          {errors[name]?.message && (
+            <p className="mt-2 text-sm text-error-500">
+              {errors[name]?.message?.toString()}
+            </p>
+          )}
+        </div>
       )}
     />
   );

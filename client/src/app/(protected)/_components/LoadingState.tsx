@@ -1,11 +1,8 @@
-import { Flex, Spinner } from "@chakra-ui/react";
-import React from "react";
-
 const LoadingState = () => {
   return (
-    <Flex justify="center" align="center" height="200px">
-      <Spinner size="xl" />
-    </Flex>
+    <div className="flex h-[200px] items-center justify-center">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-100 border-t-primary" />
+    </div>
   );
 };
 

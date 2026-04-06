@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
-import { Box, Avatar, Icon, Text, Button } from "@chakra-ui/react";
 import { FaCamera } from "react-icons/fa6";
+
+import { Button } from "@/components/ui/Button";
 
 interface SessionData {
   user: {
@@ -30,41 +31,21 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleButtonClick = () => {
-    if (fileInputRef.current) {
-      // setFileError(null);
-      fileInputRef.current.click();
-    }
-  };
-
   return (
-    <div className="flex gap-4 items-center">
-      <Box
-        position="relative"
-        role="group"
-        w="fit-content"
-        cursor="pointer"
-        onClick={handleButtonClick}
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        className="group relative w-fit cursor-pointer"
+        onClick={() => fileInputRef.current?.click()}
       >
-        <Avatar
-          size="2xl"
-          name={sessionData?.user?.name}
+        <img
           src={filePreview ?? sessionData?.user?.picture}
+          alt={sessionData?.user?.name ?? "Profile"}
+          className="h-24 w-24 rounded-full object-cover"
         />
-        <Box
-          position="absolute"
-          bottom="2"
-          right="50"
-          left="50"
-          bg="gray.600"
-          rounded="full"
-          p="6px"
-          cursor="pointer"
-          display="none"
-          _groupHover={{ display: "block" }}
-        >
-          <Icon as={FaCamera} boxSize="15px" color="white" />
-        </Box>
+        <span className="absolute bottom-2 left-1/2 hidden -translate-x-1/2 rounded-full bg-gray-600 p-1.5 text-white group-hover:block">
+          <FaCamera className="h-[15px] w-[15px]" />
+        </span>
         <input
           type="file"
           ref={fileInputRef}
@@ -73,26 +54,20 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
           accept="image/png, image/jpeg, image/jpg"
           id="file-input"
         />
-      </Box>
+      </button>
 
-      <div className="flex flex-col justify-between gap-3">
-        <Text fontSize={"1rem"} fontWeight={600} color="gray.700">
-          Profile Image
-        </Text>
-        <Text fontSize={"14px"} fontWeight={400} color="gray.700">
-          Min 400x400px, PNG or JPEG
-        </Text>
+      <div className="flex flex-col gap-3">
+        <p className="text-base font-semibold text-gray-700">Profile Image</p>
+        <p className="text-sm text-gray-700">Min 400x400px, PNG or JPEG</p>
 
         <div>
           <Button
             variant="outline"
             size="sm"
             onClick={uploadProfileImage}
-            isLoading={isUploading}
-            loadingText="Uploading..."
-            isDisabled={!isShowUpload || isUploading}
+            disabled={!isShowUpload || isUploading}
           >
-            Upload
+            {isUploading ? "Uploading..." : "Upload"}
           </Button>
         </div>
 

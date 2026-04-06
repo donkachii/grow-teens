@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button, Text, Box, Container, Stack } from "@chakra-ui/react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -10,14 +9,8 @@ import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
-
-const MotionText = motion(Text);
-const MotionStack = motion(Stack);
-const MotionButton = motion(Button);
-const MotionBox = motion(Box);
+import { Button } from "@/components/ui/Button";
 
 import HeroBg1 from "../../../../public/assets/images/hero-background.svg";
 import HeroBg2 from "../../../../public/assets/images/hero-background2.svg";
@@ -25,58 +18,30 @@ import HeroBg3 from "../../../../public/assets/images/hero-background3.svg";
 
 const Hero = () => {
   const router = useRouter();
-  const [isVisible, setIsVisible] = useState(false);
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: true,
-  });
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [loadedSlideIndexes, setLoadedSlideIndexes] = useState(
+    () => new Set<number>([0]),
+  );
 
   useEffect(() => {
-    if (inView) {
-      setIsVisible(true);
-    }
-  }, [inView]);
+    const timeoutId = window.setTimeout(() => {
+      setLoadedSlideIndexes((prev) => {
+        if (prev.has(1)) return prev;
+        const next = new Set(prev);
+        next.add(1);
+        return next;
+      });
+    }, 1200);
 
-  // Animation variants
-  const containerVariant = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        when: "beforeChildren",
-        staggerChildren: 0.3,
-        delayChildren: 0.5,
-      },
-    },
-  };
-
-  const itemVariant = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
-    },
-  };
-
-  const buttonVariant = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-    hover: {
-      scale: 1.05,
-      y: -5,
-      transition: { duration: 0.3 },
-      boxShadow: "0px 10px 20px rgba(0,0,0,0.2)",
-    },
-  };
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   return (
-    <section id="home" className="relative h-screen px-[5%]" ref={ref} >
-      {/* Carousel Background with Overlay */}
+    <section id="home" className="relative min-h-screen">
+      {/* Lightweight fallback background */}
+      <div className="absolute inset-0 z-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900" />
+
+      {/* Carousel Background */}
       <div className="absolute inset-0 z-0">
         <Swiper
           modules={[Autoplay, EffectFade, Pagination]}
@@ -97,173 +62,110 @@ const Hero = () => {
             },
           }}
           loop={true}
+          onSlideChange={(swiper) => {
+            const realIndex = swiper.realIndex ?? 0;
+            setActiveIndex(realIndex);
+            setLoadedSlideIndexes((prev) => {
+              if (prev.has(realIndex)) return prev;
+              const next = new Set(prev);
+              next.add(realIndex);
+              return next;
+            });
+          }}
           className="h-full w-full"
         >
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg1}
-                alt="Hero Background 1"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-                priority
-              />
+              {(activeIndex === 0 || loadedSlideIndexes.has(0)) && (
+                <Image
+                  src={HeroBg1}
+                  alt="Hero Background 1"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  priority
+                  fetchPriority="high"
+                />
+              )}
             </div>
           </SwiperSlide>
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg2}
-                alt="Hero Background 2"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-              />
+              {(activeIndex === 1 || loadedSlideIndexes.has(1)) && (
+                <Image
+                  src={HeroBg2}
+                  alt="Hero Background 2"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
           </SwiperSlide>
           <SwiperSlide>
             <div className="relative h-full w-full">
-              <Image
-                src={HeroBg3}
-                alt="Hero Background 3"
-                layout="fill"
-                objectFit="cover"
-                className="w-full h-full"
-              />
+              {(activeIndex === 2 || loadedSlideIndexes.has(2)) && (
+                <Image
+                  src={HeroBg3}
+                  alt="Hero Background 3"
+                  fill
+                  sizes="100vw"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
           </SwiperSlide>
         </Swiper>
       </div>
 
-      {/* Content */}
-      <Container maxW="container.xl" mx="auto" h="full" position="relative" zIndex="10">
-        <MotionStack
-          h="full"
-          direction="column"
-          spacing={8}
-          justify="center"
-          align={{ base: "center", lg: "flex-start" }}
-          textAlign={{ base: "center", lg: "left" }}
-          pt={{ base: "20", md: "0" }}
-          initial="hidden"
-          animate={isVisible ? "visible" : "hidden"}
-          variants={containerVariant}
-        >
-          <MotionBox maxW={{ base: "100%", lg: "60%" }} variants={itemVariant}>
-            <MotionText
-              as="h1"
-              fontSize={{ base: "4xl", md: "5xl", lg: "6xl" }}
-              color="white"
-              lineHeight="1.2"
-              className="drop-shadow-xl"
-              mb={4}
-              variants={itemVariant}
-            >
-              Empowering African Teens for a Brighter Future
-            </MotionText>
+      {/* Readability overlay */}
+      <div className="absolute inset-0 z-1 bg-black/55" />
 
-            <MotionText
-              fontSize={{ base: "lg", md: "xl" }}
-              color="white"
-              mb={8}
-              maxW={{ base: "full", lg: "xl" }}
-              className="drop-shadow-lg"
-              variants={itemVariant}
-            >
+      {/* Content */}
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-4 pt-24 pb-16 sm:px-6 sm:pt-28 sm:pb-20 lg:px-8">
+        <div className="w-full max-w-3xl text-center lg:text-left">
+          <div>
+            <h1 className="mb-4 text-4xl text-white drop-shadow-xl md:text-5xl lg:text-6xl">
+              Empowering African Teens for a Brighter Future
+            </h1>
+
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-white drop-shadow-lg md:text-xl lg:mx-0 lg:max-w-xl">
               At GrowTeens, we are dedicated to equipping African teenagers with
               essential skills for success in the digital age. Our mission is to
               empower youth to become proactive contributors to the global
               economy.
-            </MotionText>
+            </p>
 
-            <MotionStack
-              direction={{ base: "column", sm: "row" }}
-              spacing={{ base: 4, sm: 6 }}
-              align={{ base: "center", lg: "flex-start" }}
-              variants={itemVariant}
-            >
-              <MotionButton
+            <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-center sm:gap-6 lg:justify-start">
+              <Button
+                variant="primary"
                 size="lg"
-                height="60px"
-                px={8}
-                fontSize="lg"
-                colorScheme="yellow"
                 onClick={() => router.push("/auth/signup")}
-                variants={buttonVariant}
-                whileHover="hover"
-                initial="hidden"
-                animate={isVisible ? "visible" : "hidden"}
               >
-                Join Our Community
-              </MotionButton>
+                <span>Join Our Community</span>
+                <ArrowRightIcon size={18} className="text-white" />
+              </Button>
 
-              <MotionButton
+              <Button
+                variant="ghost"
                 size="lg"
-                height="60px"
-                px={8}
-                fontSize="lg"
-                variant="outline"
-                rightIcon={<ArrowRight size={18} />}
-                _hover={{ bg: "whiteAlpha.200" }}
                 onClick={() => router.push("/#about")}
-                variants={buttonVariant}
-                initial="hidden"
-                animate={isVisible ? "visible" : "hidden"}
               >
                 Learn More
-              </MotionButton>
-            </MotionStack>
-          </MotionBox>
-        </MotionStack>
-      </Container>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Scroll indicator with enhanced animation */}
-      <MotionBox
-        position="absolute"
-        bottom="10"
-        left="50%"
-        transform="translateX(-50%)"
-        zIndex="10"
-        animate={{
-          y: [0, 10, 0],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          repeatType: "loop",
-        }}
-      >
-        <MotionBox
-          h="10"
-          w="6"
-          border="2px"
-          borderColor="white"
-          borderRadius="full"
-          display="flex"
-          justifyContent="center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 1 }}
-        >
-          <MotionBox
-            w="2"
-            h="2"
-            bg="white"
-            borderRadius="full"
-            mt="2"
-            animate={{
-              y: [0, 5, 0],
-              opacity: [1, 0.5, 1],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-          />
-        </MotionBox>
-      </MotionBox>
+      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="h-10 w-6 border-2 border-white rounded-full flex items-center justify-center">
+          <div className="h-2 w-2 bg-white rounded-full animate-bounce" />
+        </div>
+      </div>
     </section>
   );
 };

@@ -1,5 +1,4 @@
-import React, { useState, useRef } from "react";
-import { Box, Text } from "@chakra-ui/react";
+import React, { useRef, useState } from "react";
 import { FiUploadCloud } from "react-icons/fi";
 import { toast } from "react-toastify";
 
@@ -21,48 +20,38 @@ const UploadFile: React.FC<FileUploadProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0] || null;
-    if (selectedFile) {
-      if (selectedFile.size > maxFileSize) {
-        toast.error(
-          `File size exceeds the ${(maxFileSize / 1024 / 1024).toFixed(
-            2
-          )}MB limit. Please upload a smaller file.`
-        );
-        setFile(null);
-      } else {
-        setFile(selectedFile);
-        onUpload(selectedFile);
-        toast.info(uploadSuccessMessage);
-      }
+  const applyFile = (incomingFile: File) => {
+    if (incomingFile.size > maxFileSize) {
+      toast.error(
+        `File size exceeds the ${(maxFileSize / 1024 / 1024).toFixed(
+          2
+        )}MB limit. Please upload a smaller file.`
+      );
+      setFile(null);
+      return;
     }
+
+    setFile(incomingFile);
+    onUpload(incomingFile);
+    toast.info(uploadSuccessMessage);
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) applyFile(selectedFile);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files?.[0];
-    if (droppedFile) {
-      if (droppedFile.size > maxFileSize) {
-        toast.error(
-          `File size exceeds the ${(maxFileSize / 1024 / 1024).toFixed(
-            2
-          )}MB limit. Please upload a smaller file.`
-        );
-        setFile(null);
-      } else {
-        setFile(droppedFile);
-        onUpload(droppedFile);
-        toast.info(uploadSuccessMessage);
-      }
-    }
+    if (droppedFile) applyFile(droppedFile);
   };
 
   return (
-    <Box className="space-y-5 mb-6">
+    <div className="mb-6 space-y-5">
       <div className="mb-8">
         <div
-          className="relative p-4"
+          className="relative rounded-2xl border border-dashed border-gray-300 bg-white p-6 transition-colors hover:border-primary-300 hover:bg-primary-100/30"
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
@@ -74,34 +63,32 @@ const UploadFile: React.FC<FileUploadProps> = ({
             onChange={handleChange}
             className="hidden"
           />
-          <div className="flex flex-col gap-2 cursor-pointer">
-            <div className="bg-gray-50 p-2 rounded-full mx-auto max-w-max mb-4">
-              <FiUploadCloud className="w-6 h-6 text-gray-700" />
+          <div className="flex cursor-pointer flex-col gap-2">
+            <div className="mx-auto mb-4 max-w-max rounded-full bg-gray-50 p-2">
+              <FiUploadCloud className="h-6 w-6 text-gray-700" />
             </div>
             {file ? (
               <>
-                <Text fontSize="md" textAlign="center">
-                  {file.name}
-                </Text>
-                <Text fontSize="sm" color="gray.500" textAlign="center">
+                <p className="text-center text-base text-gray-900">{file.name}</p>
+                <p className="text-center text-sm text-gray-500">
                   {(file.size / 1024).toFixed(2)} KB
-                </Text>
+                </p>
               </>
             ) : (
               <>
-                <p className="text-sm font-normal text-center">
-                  <span className="text-primary-500">
-                    Click to upload
-                  </span>{" "}
-                  or drag and drop
+                <p className="text-center text-sm font-normal text-gray-700">
+                  <span className="text-primary-500">Click to upload</span> or
+                  drag and drop
                 </p>
-                <p className="text-sm font-normal text-center">{uploadLabel}</p>
+                <p className="text-center text-sm font-normal text-gray-600">
+                  {uploadLabel}
+                </p>
               </>
             )}
           </div>
         </div>
       </div>
-    </Box>
+    </div>
   );
 };
 

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Box, Image, Text } from "@chakra-ui/react";
 import Link from "next/link";
 
 interface CourseCardProps {
@@ -16,44 +15,23 @@ interface CourseCardProps {
 }
 
 const ProgramCard = ({
-
   image,
   title,
   description,
-  // statusType,
-  // enrollDate,
-  // onEnroll,
   id,
 }: CourseCardProps) => {
   return (
     <Link href={`/dashboard/course/${id}`} className="cursor-pointer">
-      <Box
-        p={5}
-        h="full"
-        borderRadius="lg"
-        border="1px solid gray"
-        boxShadow="lg"
-        transition="transform 0.3s ease-in-out"
-        _hover={{ transform: "scale(1.05)" }}
-      >
-        <Image
+      <article className="h-full rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg">
+        <img
           src={image}
           alt={title}
-          borderRadius="md"
-          mb={4}
-          width="full"
-          height="100px"
-          objectFit="cover"
+          className="mb-4 h-[100px] w-full rounded-md object-cover"
         />
 
-        <Text fontSize="lg" fontWeight="bold" mb={2}>
-          {title}
-        </Text>
-
-        <Text fontSize="sm" color="gray.600" mb={3}>
-          {description}
-        </Text>
-      </Box>
+        <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
+      </article>
     </Link>
   );
 };

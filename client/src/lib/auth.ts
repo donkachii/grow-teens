@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import requestClient from "@/lib/requestClient";
 import config from "@/lib/config";
 
-export const authOptions = {
-  secret: process.env.JWT_SECRET || config.nextAuthSecret,
+export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || config.nextAuthSecret,
   session: {
     strategy: "jwt" as const,
     maxAge: 60 * 60, // 1hour,

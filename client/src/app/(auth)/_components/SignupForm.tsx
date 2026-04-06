@@ -5,22 +5,14 @@ import React, { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FiEyeOff } from "react-icons/fi";
 import { IoEyeOutline } from "react-icons/io5";
-import {
-  Button,
-  FormControl,
-  FormLabel,
-  IconButton,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Select,
-  Text,
-} from "@chakra-ui/react";
-import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import { useRouter, useSearchParams } from "next/navigation";
 import ErrorMessage from "./ErrorMessage";
-import { signIn } from "next-auth/react";
 import requestClient from "@/lib/requestClient";
 import { handleServerErrorMessage } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface IFormInput {
   firstName: string;
@@ -38,12 +30,13 @@ export default function SignupForm() {
     searchParams?.get("error") ?? null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors },  
   } = useForm<IFormInput>({ mode: "onChange" });
 
   // Watch the role field
@@ -56,37 +49,13 @@ export default function SignupForm() {
         ...data,
         age: Number(data.age) || null,
       });
-      const { status, message } = response.data;
 
-      if (status === "error") {
-        setIsLoading(false);
-        return setErrorMessage(message);
-      }
-
-      const loginResponse = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        callbackUrl:
-          searchParams.get("callbackUrl") || `${window.location.origin}/`,
-        redirect: false,
-      });
-
-      if (!loginResponse) {
-        setErrorMessage("An unknown error occurred.");
+      if (response.status === 201) {
+        router.push(
+          `/auth/resend-verification?email=${encodeURIComponent(data.email)}&registered=true`
+        );
         return;
       }
-
-      if (loginResponse.error) {
-        setErrorMessage(loginResponse.error);
-        return;
-      }
-
-      if (loginResponse.ok && loginResponse.url) {
-        window.location.href = loginResponse.url;
-        return;
-      }
-
-      setErrorMessage(loginResponse.error);
     } catch (error: any) {
       setIsLoading(false);
       const errorMessage = handleServerErrorMessage(error);
@@ -107,62 +76,62 @@ export default function SignupForm() {
 
       <div className="flex flex-col gap-5 text-gray">
         {/* First Name Field */}
-        <FormControl isInvalid={!!errors.firstName?.message} mb={5}>
-          <FormLabel htmlFor="firstName">
+        <div className={cn("mb-5", errors.firstName?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+          <label htmlFor="firstName">
             First Name
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               *
-            </Text>
-          </FormLabel>
+            </span>
+          </label>
           <Input
             id="firstName"
             type="text"
             placeholder="Enter your first name"
-            isDisabled={isLoading}
+            disabled={isLoading}
             {...register("firstName", { required: "First name is required" })}
           />
           {errors.firstName && (
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               {errors.firstName?.message}
-            </Text>
+            </span>
           )}
-        </FormControl>
+        </div>
 
         {/* Last Name Field */}
-        <FormControl isInvalid={!!errors.lastName?.message} mb={5}>
-          <FormLabel htmlFor="lastName">
+        <div className={cn("mb-5", errors.lastName?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+          <label htmlFor="lastName">
             Last Name
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               *
-            </Text>
-          </FormLabel>
+            </span>
+          </label>
           <Input
             id="lastName"
             type="text"
             placeholder="Enter your last name"
-            isDisabled={isLoading}
+            disabled={isLoading}
             {...register("lastName", { required: "Last name is required" })}
           />
           {errors.lastName && (
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               {errors.lastName?.message}
-            </Text>
+            </span>
           )}
-        </FormControl>
+        </div>
 
         {/* Email Field */}
-        <FormControl isInvalid={!!errors.email?.message} mb={5}>
-          <FormLabel htmlFor="email">
+          <div className={cn("mb-5", errors.email?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+          <label htmlFor="email">
             Email
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               *
-            </Text>
-          </FormLabel>
+            </span>
+          </label>
           <Input
             id="email"
             type="email"
             placeholder="Enter your email address"
-            isDisabled={isLoading}
+            disabled={isLoading}
             {...register("email", {
               required: "Email is required",
               pattern: {
@@ -172,68 +141,63 @@ export default function SignupForm() {
             })}
           />
           {errors.email && (
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               {errors.email?.message}
-            </Text>
+            </span>
           )}
-        </FormControl>
+        </div>
 
         {/* Password Field */}
-        <FormControl isInvalid={!!errors.password?.message} mb={5}>
-          <FormLabel htmlFor="password">
+          <div className={cn("mb-5", errors.password?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+          <label htmlFor="password">
             Password
-            <Text as="span" color="red.500">
+                <span className="text-red-500 font-bold">
               *
-            </Text>
-          </FormLabel>
-          <InputGroup size="md">
+            </span>
+          </label>
+          <div className="relative">
             <Input
               id="password"
               type={isVisible ? "text" : "password"}
               placeholder="Enter password"
-              isDisabled={isLoading}
+              disabled={isLoading}
               {...register("password", { required: "Password is required" })}
             />
-            <InputRightElement width="4.5rem">
-              <IconButton
-                isDisabled={isLoading}
-                h="1.75rem"
-                size="sm"
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <button
+                disabled={isLoading}
                 onClick={toggleVisibility}
-                bgColor="transparent"
-                _hover={{ bg: "transparent" }}
-                icon={
-                  isVisible ? (
-                    <FiEyeOff size={16} />
-                  ) : (
-                    <IoEyeOutline size={16} />
-                  )
-                }
-                aria-label="Toggle password visibility"
-              />
-            </InputRightElement>
-          </InputGroup>
+                className="text-gray-500 transition-colors hover:text-gray-700"
+              >
+                {isVisible ? (
+                  <FiEyeOff className="h-4 w-4" />
+                ) : (
+                  <IoEyeOutline className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
           {errors.password && (
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               {errors.password?.message}
-            </Text>
+            </span>
           )}
-        </FormControl>
+        </div>
 
         {/* Conditionally render Age Field if role is TEEN */}
         {selectedUserType === "TEEN" && (
-          <FormControl isInvalid={!!errors.age?.message} mb={5}>
-            <FormLabel htmlFor="age">
+          <div className={cn("mb-5", errors.age?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+            <label htmlFor="age">
               Age
-              <Text as="span" color="red.500">
+              <span className="text-red-500 font-bold">
                 *
-              </Text>
-            </FormLabel>
+              </span>
+            </label>
             <Input
               id="age"
               type="number"
               placeholder="Enter your age"
-              isDisabled={isLoading}
+              disabled={isLoading}
               {...register("age", {
                 required: "Age is required",
                 min: { value: 13, message: "Minimum age is 13" },
@@ -241,25 +205,25 @@ export default function SignupForm() {
               })}
             />
             {errors.age && (
-              <Text as="span" color="red.500">
+              <span className="text-red-500 font-bold">
                 {errors.age?.message}
-              </Text>
+              </span>
             )}
-          </FormControl>
+          </div>
         )}
 
         {/* User Type Select Field */}
-        <FormControl isInvalid={!!errors.role?.message} mb={5}>
-          <FormLabel htmlFor="role">
+          <div className={cn("mb-5", errors.role?.message ? "border-error-300 focus:border-error-400" : "border-gray-300 focus:border-primary")}>
+          <label htmlFor="role">
             User Type
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               *
-            </Text>
-          </FormLabel>
+            </span>
+          </label>
           <Select
             id="role"
-            placeholder="Select user type"
-            isDisabled={isLoading}
+            placeholder="Select your role"
+            disabled={isLoading}
             {...register("role", { required: "User type is required" })}
           >
             <option value="TEEN">Teen</option>
@@ -268,19 +232,18 @@ export default function SignupForm() {
             <option value="ADMIN">Admin</option>
           </Select>
           {errors.role && (
-            <Text as="span" color="red.500">
+            <span className="text-red-500 font-bold">
               {errors.role?.message}
-            </Text>
+            </span>
           )}
-        </FormControl>
+        </div>
       </div>
       <div className="my-6 flex flex-col gap-4">
         <Button
-          variant="solid"
+          variant="primary"
           size="lg"
           type="submit"
-          isLoading={isLoading}
-          loadingText="Submitting"
+          disabled={isLoading}
         >
           Sign Up
         </Button>

@@ -20,12 +20,12 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { FiEdit2, FiPlus } from "react-icons/fi";
+import { Category } from "@/services/api";
 
 interface FormData {
   title: string;
   description: string;
-  overview: string;
-  type: string;
+  categoryId: number;
   difficulty: string;
   durationHours: number;
   instructorId: number;
@@ -37,6 +37,8 @@ interface CourseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   formData: FormData;
+  categories: Category[];
+  categoriesLoading?: boolean;
   handleFormChange: (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -45,19 +47,20 @@ interface CourseFormModalProps {
   handleCheckboxChange: (name: string, value: boolean) => void;
   handleFileChange: (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "thumbnail" | "coverImage"
+    type: "thumbnail"
   ) => void;
   handleSubmit: () => void;
   isLoading: boolean;
   isEditMode: boolean;
   thumbnailPreview: string;
-  coverImagePreview: string;
 }
 
 const CourseFormModal: React.FC<CourseFormModalProps> = ({
   isOpen,
   onClose,
   formData,
+  categories,
+  categoriesLoading = false,
   handleFormChange,
   handleCheckboxChange,
   handleFileChange,
@@ -65,7 +68,6 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
   isLoading,
   isEditMode,
   thumbnailPreview,
-  coverImagePreview,
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
@@ -89,47 +91,39 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel fontSize="sm">Short Description</FormLabel>
+              <FormLabel fontSize="sm">Description</FormLabel>
               <Textarea
                 name="description"
                 value={formData.description}
                 onChange={handleFormChange}
-                placeholder="Brief description (150-200 characters)"
+                placeholder="Brief description of the course"
                 fontSize="sm"
                 rows={3}
               />
             </FormControl>
 
-            <FormControl>
-              <FormLabel fontSize="sm">Detailed Overview</FormLabel>
-              <Textarea
-                name="overview"
-                value={formData.overview}
-                onChange={handleFormChange}
-                placeholder="Detailed course overview"
-                fontSize="sm"
-                rows={5}
-              />
-            </FormControl>
-
             <SimpleGrid columns={2} spacing={4}>
               <FormControl isRequired>
-                <FormLabel fontSize="sm">Course Type</FormLabel>
+                <FormLabel fontSize="sm">Category</FormLabel>
                 <Select
-                  name="type"
-                  value={formData.type}
+                  name="categoryId"
+                  value={formData.categoryId || ""}
                   onChange={handleFormChange}
                   fontSize="sm"
+                  placeholder={
+                    categoriesLoading
+                      ? "Loading categories…"
+                      : categories.length === 0
+                      ? "No categories available"
+                      : "Select category"
+                  }
+                  isDisabled={categoriesLoading || categories.length === 0}
                 >
-                  <option value="TECH">Technology</option>
-                  <option value="FINANCIAL_LITERACY">Financial Literacy</option>
-                  <option value="LEADERSHIP">Leadership</option>
-                  <option value="ENTREPRENEURSHIP">Entrepreneurship</option>
-                  <option value="PERSONAL_DEVELOPMENT">
-                    Personal Development
-                  </option>
-                  <option value="CAREER">Career</option>
-                  <option value="ACADEMIC">Academic</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </Select>
               </FormControl>
 
@@ -175,53 +169,28 @@ const CourseFormModal: React.FC<CourseFormModalProps> = ({
               </FormControl>
             </SimpleGrid>
 
-            <SimpleGrid columns={2} spacing={4}>
-              <FormControl>
-                <FormLabel fontSize="sm">Thumbnail Image</FormLabel>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "thumbnail")}
-                  fontSize="sm"
-                  p={1}
-                />
-                {thumbnailPreview && (
-                  <Box mt={2} position="relative" width="150px" height="100px">
-                    <Image
-                      src={thumbnailPreview}
-                      alt="Thumbnail Preview"
-                      objectFit="cover"
-                      width="100%"
-                      height="100%"
-                      borderRadius="md"
-                    />
-                  </Box>
-                )}
-              </FormControl>
-
-              <FormControl>
-                <FormLabel fontSize="sm">Cover Image</FormLabel>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "coverImage")}
-                  fontSize="sm"
-                  p={1}
-                />
-                {coverImagePreview && (
-                  <Box mt={2} position="relative" width="150px" height="80px">
-                    <Image
-                      src={coverImagePreview}
-                      alt="Cover Image Preview"
-                      objectFit="cover"
-                      width="100%"
-                      height="100%"
-                      borderRadius="md"
-                    />
-                  </Box>
-                )}
-              </FormControl>
-            </SimpleGrid>
+            <FormControl>
+              <FormLabel fontSize="sm">Thumbnail Image</FormLabel>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, "thumbnail")}
+                fontSize="sm"
+                p={1}
+              />
+              {thumbnailPreview && (
+                <Box mt={2} position="relative" width="150px" height="100px">
+                  <Image
+                    src={thumbnailPreview}
+                    alt="Thumbnail Preview"
+                    objectFit="cover"
+                    width="100%"
+                    height="100%"
+                    borderRadius="md"
+                  />
+                </Box>
+              )}
+            </FormControl>
 
             <SimpleGrid columns={2} spacing={4} mt={4}>
               <FormControl display="flex" alignItems="center">

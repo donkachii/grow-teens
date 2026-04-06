@@ -1,23 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { FiEyeOff } from "react-icons/fi";
 import { IoEyeOutline } from "react-icons/io5";
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import {
-  Button,
-  FormControl,
-  FormLabel,
-  IconButton,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Text,
-} from "@chakra-ui/react";
-import Link from "next/link";
+
+import { Button } from "@/components/ui/Button";
 import ErrorMessage from "./ErrorMessage";
 
 interface IFormInput {
@@ -25,9 +16,12 @@ interface IFormInput {
   password: string;
 }
 
-export default function LoginForm() {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
+export default function LoginForm() {
+  const [isVisible, setIsVisible] = useState(false);
   const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(
     searchParams?.get("error") ?? null
@@ -44,6 +38,7 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     setIsLoading(true);
+
     const response = await signIn("credentials", {
       email: data.email,
       password: data.password,
@@ -72,8 +67,6 @@ export default function LoginForm() {
     setErrorMessage(response.error);
   };
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       {errorMessage && (
@@ -83,25 +76,25 @@ export default function LoginForm() {
         />
       )}
 
-      <div className="flex flex-col gap-5 text-gray">
-        <FormControl isInvalid={!!errors.email?.message} mb={5}>
-          <FormLabel htmlFor="email">
-            Email
-            <Text as="span" color="red.500">
-              *
-            </Text>
-          </FormLabel>
-          <Input
-            errorBorderColor="red.300"
+      <div className="flex flex-col gap-5 text-gray-700">
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            Email <span className="text-error-500">*</span>
+          </label>
+          <input
             id="email"
-            isInvalid={!!errors.email?.message}
-            className="p-[10px_14px] w-full gap-2 rounded-lg border-1 border-gray-300"
-            _focus={{
-              border: !!errors.email?.message ? "red.300" : "border-gray-300",
-            }}
             type="text"
             placeholder="Enter your business email"
-            isDisabled={isLoading}
+            disabled={isLoading}
+            className={cn(
+              "w-full rounded-lg border px-4 py-3 outline-none transition",
+              errors.email
+                ? "border-error-300 focus:border-error-400"
+                : "border-gray-300 focus:border-primary"
+            )}
             {...register("email", {
               required: "Email is required",
               pattern: {
@@ -111,85 +104,80 @@ export default function LoginForm() {
             })}
           />
           {errors.email && (
-            <Text as={"span"} className="text-red-500">
-              {errors.email?.message}
-            </Text>
+            <span className="mt-2 block text-sm text-error-500">
+              {errors.email.message}
+            </span>
           )}
-        </FormControl>
+        </div>
 
-        <FormControl isInvalid={!!errors.password?.message} mb={5}>
-          <FormLabel htmlFor="password">
-            Password
-            <Text as="span" color="red.500">
-              *
-            </Text>
-          </FormLabel>
-          <InputGroup size="md">
-            <Input
+        <div>
+          <label
+            htmlFor="password"
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            Password <span className="text-error-500">*</span>
+          </label>
+          <div className="relative">
+            <input
               id="password"
-              errorBorderColor="red.300"
-              isInvalid={!!errors.password?.message}
-              className="p-[10px_14px] w-full gap-2 rounded-lg border-1 border-gray-300"
               type={isVisible ? "text" : "password"}
               placeholder="Enter password"
-              isDisabled={isLoading}
+              disabled={isLoading}
+              className={cn(
+                "w-full rounded-lg border px-4 py-3 pr-12 outline-none transition",
+                errors.password
+                  ? "border-error-300 focus:border-error-400"
+                  : "border-gray-300 focus:border-primary"
+              )}
               {...register("password", {
                 required: true,
               })}
             />
-            <InputRightElement width="4.5rem">
-              <IconButton
-                isDisabled={isLoading}
-                h="1.75rem"
-                size="sm"
-                onClick={toggleVisibility}
-                bgColor={"transparent"}
-                _hover={{
-                  bg: "transparent",
-                }}
-                icon={
-                  isVisible ? (
-                    <FiEyeOff
-                      size={16}
-                      className="text-default-400 pointer-events-none text-gray"
-                    />
-                  ) : (
-                    <IoEyeOutline
-                      size={16}
-                      className="text-default-400 pointer-events-none text-gray"
-                    />
-                  )
-                }
-                aria-label={""}
-              ></IconButton>
-            </InputRightElement>
-          </InputGroup>
-          {errors.password && (
-            <Text as={"span"} className="text-red-500">
-              Password is required
-            </Text>
-          )}
-        </FormControl>
-
-        <div className="flex justify-between">
-          <div className="flex gap-2 items-center">
-            <input type="checkbox" id="remember" className="w-4 h-4" />
-            <label htmlFor="remember">Remember Me</label>
+            <button
+              type="button"
+              onClick={() => setIsVisible((prev) => !prev)}
+              disabled={isLoading}
+              aria-label={isVisible ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-3 flex items-center text-gray-500 transition-colors hover:text-gray-700"
+            >
+              {isVisible ? (
+                <FiEyeOff className="h-4 w-4" />
+              ) : (
+                <IoEyeOutline className="h-4 w-4" />
+              )}
+            </button>
           </div>
-          <Link href="/auth/forgot-password" className="text-primary">
+          {errors.password && (
+            <span className="mt-2 block text-sm text-error-500">
+              Password is required
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <label
+            htmlFor="remember"
+            className="flex items-center gap-2 text-gray-600"
+          >
+            <input
+              type="checkbox"
+              id="remember"
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <span>Remember Me</span>
+          </label>
+          <Link
+            href="/auth/forgot-password"
+            className="font-medium text-primary transition-colors hover:text-primary-600"
+          >
             Forgot Password?
           </Link>
         </div>
       </div>
+
       <div className="my-6 flex flex-col gap-4">
-        <Button
-          variant={"solid"}
-          size="lg"
-          type="submit"
-          isLoading={isLoading}
-          loadingText="Submitting"
-        >
-          Sign In
+        <Button type="submit" size="lg" fullWidth disabled={isLoading}>
+          {isLoading ? "Submitting" : "Sign In"}
         </Button>
       </div>
     </form>

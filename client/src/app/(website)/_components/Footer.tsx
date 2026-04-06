@@ -1,171 +1,128 @@
 "use client";
 
-import {
-  Box,
-  Container,
-  Grid,
-  Heading,
-  Image,
-  Input,
-  Link,
-  Stack,
-  Text,
-  IconButton,
-  useToast,
-  Button,
-} from "@chakra-ui/react";
-import React, { useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { toast } from "react-toastify";
 import {
   FaFacebook,
-  FaTwitter,
   FaInstagram,
   FaLinkedin,
+  FaTwitter,
   FaYoutube,
 } from "react-icons/fa";
+
+import { Button } from "@/components/ui/Button";
 import logo from "../../../../public/assets/images/logo.svg";
+
+const quickLinks = [
+  { label: "About Us", href: "/about" },
+  { label: "Our Programs", href: "/programs" },
+  { label: "Mentors", href: "/mentors" },
+  { label: "Partners", href: "/partners" },
+  { label: "FAQ", href: "/faq" },
+];
+
+const socialLinks = [
+  { label: "Facebook", icon: FaFacebook, href: "#" },
+  { label: "Twitter", icon: FaTwitter, href: "#" },
+  { label: "Instagram", icon: FaInstagram, href: "#" },
+  { label: "LinkedIn", icon: FaLinkedin, href: "#" },
+  { label: "YouTube", icon: FaYoutube, href: "#" },
+];
 
 const Footer = () => {
   const [email, setEmail] = useState("");
-  const toast = useToast();
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast({
-      title: "Subscribed!",
-      description: "Thank you for subscribing to our newsletter.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
-    });
+
+    toast.success("Thank you for subscribing to our newsletter.");
     setEmail("");
   };
 
   return (
-    <Box as="footer" bg="gray.900" color="white" py={{ base: 12, md: 16 }}>
-      <Container maxW="container.xl" px="5%">
-        <Grid
-          templateColumns={{
-            base: "1fr",
-            md: "repeat(2, 1fr)",
-            lg: "2fr 1fr 1fr 1fr",
-          }}
-          gap={{ base: 10, md: 8 }}
-          mb={{ base: 12, md: 16 }}
-        >
-          {/* Logo and description */}
-          <Box maxW={{ md: "full", lg: "90%" }}>
-            <Link href="/" display="inline-block" mb={6}>
-              <Image src={logo.src} alt="GrowTeens Logo" maxW="180px" />
+    <footer className="bg-gray-900 py-12 text-white md:py-16">
+      <div className="mx-auto max-w-7xl px-[5%]">
+        <div className="mb-12 grid gap-10 md:grid-cols-2 lg:mb-16 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-8">
+          <div className="max-w-full lg:max-w-[90%]">
+            <Link href="/" className="mb-6 inline-block">
+              <Image
+                src={logo}
+                alt="GrowTeens Logo"
+                className="h-auto w-[180px]"
+                priority
+              />
             </Link>
-            <Text mb={6} color="gray.300">
+
+            <p className="mb-6 text-gray-300">
               Empowering African teenagers with the skills, knowledge, and
               support they need to thrive in the digital age and become leaders
               in their communities.
-            </Text>
-            <Stack direction="row" spacing={4}>
-              <IconButton
-                aria-label="Facebook"
-                icon={<FaFacebook />}
-                colorScheme="whiteAlpha"
-                variant="ghost"
-                borderRadius="full"
-              />
-              <IconButton
-                aria-label="Twitter"
-                icon={<FaTwitter />}
-                colorScheme="whiteAlpha"
-                variant="ghost"
-                borderRadius="full"
-              />
-              <IconButton
-                aria-label="Instagram"
-                icon={<FaInstagram />}
-                colorScheme="whiteAlpha"
-                variant="ghost"
-                borderRadius="full"
-              />
-              <IconButton
-                aria-label="LinkedIn"
-                icon={<FaLinkedin />}
-                colorScheme="whiteAlpha"
-                variant="ghost"
-                borderRadius="full"
-              />
-              <IconButton
-                aria-label="YouTube"
-                icon={<FaYoutube />}
-                colorScheme="whiteAlpha"
-                variant="ghost"
-                borderRadius="full"
-              />
-            </Stack>
-          </Box>
+            </p>
 
-          {/* Quick Links */}
-          <Box>
-            <Heading size="md" mb={6}>
-              Quick Links
-            </Heading>
-            <Stack spacing={3}>
-              <Link href="/about" _hover={{ color: "primary.400" }}>
-                About Us
-              </Link>
-              <Link href="/programs" _hover={{ color: "primary.400" }}>
-                Our Programs
-              </Link>
-              <Link href="/mentors" _hover={{ color: "primary.400" }}>
-                Mentors
-              </Link>
-              <Link href="/partners" _hover={{ color: "primary.400" }}>
-                Partners
-              </Link>
-              <Link href="/faq" _hover={{ color: "primary.400" }}>
-                FAQ
-              </Link>
-            </Stack>
-          </Box>
+            <div className="flex flex-wrap gap-3">
+              {socialLinks.map(({ label, icon: Icon, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <Icon className="h-5 w-5" />
+                </Link>
+              ))}
+            </div>
+          </div>
 
-          {/* Contact */}
-          <Box>
-            <Heading size="md" mb={6}>
-              Contact
-            </Heading>
-            <Stack spacing={3} color="gray.300">
-              <Text>26 Innovation Avenue</Text>
-              <Text>Lagos, Nigeria</Text>
-              <Text>contact@growteens.org</Text>
-              <Text>+234 800 123 4567</Text>
-            </Stack>
-          </Box>
+          <div>
+            <h3 className="mb-6 text-lg font-semibold">Quick Links</h3>
+            <div className="space-y-3">
+              {quickLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="block text-white/90 transition-colors hover:text-primary-300"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
 
-          {/* Newsletter */}
-          <Box>
-            <Heading size="md" mb={6}>
-              Stay Updated
-            </Heading>
-            <Text mb={4} color="gray.300">
+          <div>
+            <h3 className="mb-6 text-lg font-semibold">Contact</h3>
+            <div className="space-y-3 text-gray-300">
+              <p>26 Innovation Avenue</p>
+              <p>Lagos, Nigeria</p>
+              <p>contact@growteens.org</p>
+              <p>+234 800 123 4567</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-6 text-lg font-semibold">Stay Updated</h3>
+            <p className="mb-4 text-gray-300">
               Subscribe to our newsletter for updates on programs, events, and
               success stories.
-            </Text>
-            <form onSubmit={handleSubscribe}>
-              <Stack direction="row" spacing={3}>
-                <Input
-                  type="email"
-                  placeholder="Your Email Here"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  bg="white"
-                  color="black"
-                />
-                <Button type="submit" colorScheme="primary">
-                  Subscribe
-                </Button>
-              </Stack>
+            </p>
+
+            <form onSubmit={handleSubscribe} className="flex flex-col gap-3 sm:flex-row">
+              <input
+                type="email"
+                placeholder="Your Email Here"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="min-w-0 flex-1 rounded-md border border-white/10 bg-white px-4 py-3 text-black outline-none transition focus:border-primary-300"
+              />
+              <Button type="submit" className="shrink-0">
+                Subscribe
+              </Button>
             </form>
-          </Box>
-        </Grid>
-      </Container>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 };
 

@@ -1,26 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  Heading,
-  Text,
-  Flex,
-  Progress,
-  Badge,
-  IconButton,
-  useToast,
-  Spinner,
-  Center,
-  VStack,
-} from "@chakra-ui/react";
-import { FiThumbsUp, FiThumbsDown, FiRefreshCw, FiPlus } from "react-icons/fi";
+import React, { useCallback, useEffect, useState, useTransition } from "react";
+import { FiPlus, FiRefreshCw, FiThumbsDown, FiThumbsUp } from "react-icons/fi";
 import { useParams } from "next/navigation";
-import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
+import { toast } from "react-toastify";
+
+import { Button } from "@/components/ui/Button";
+import requestClient from "@/lib/requestClient";
 import { NextAuthUserSession } from "@/types";
 
 interface Flashcard {
@@ -44,7 +32,6 @@ export default function FlashcardStudyPage() {
   const [isPending, startTransition] = useTransition();
   const params = useParams();
 
-  const toast = useToast();
   const moduleId = Number(params.moduleId);
 
   const session = useSession();
@@ -67,16 +54,12 @@ export default function FlashcardStudyPage() {
         }
       } catch (error) {
         console.error("Error loading flashcards:", error);
-        toast({
-          title: "Error loading flashcards",
-          status: "error",
-          duration: 3000,
-        });
+        toast.error("Error loading flashcards");
       } finally {
         setLoading(false);
       }
     });
-  }, [moduleId, sessionData?.user?.token, toast]);
+  }, [moduleId, sessionData?.user?.token]);
 
   const generateFlashcards = useCallback(() => {
     if (!sessionData?.user?.token) return;
@@ -89,25 +72,17 @@ export default function FlashcardStudyPage() {
         }).post("/flashcards/generate", { moduleId, count: 5 });
 
         if (response.data) {
-          toast({
-            title: "Flashcards generated successfully!",
-            status: "success",
-            duration: 3000,
-          });
+          toast.success("Flashcards generated successfully!");
           loadFlashcards();
         }
       } catch (error) {
         console.error("Failed to generate flashcards:", error);
-        toast({
-          title: "Failed to generate flashcards",
-          status: "error",
-          duration: 3000,
-        });
+        toast.error("Failed to generate flashcards");
       } finally {
         setLoading(false);
       }
     });
-  }, [moduleId, sessionData?.user?.token, loadFlashcards, toast]);
+  }, [moduleId, sessionData?.user?.token, loadFlashcards]);
 
   const recordInteraction = useCallback(
     (flashcardId: number, correct: boolean) => {
@@ -119,10 +94,8 @@ export default function FlashcardStudyPage() {
             token: sessionData?.user?.token,
           }).post(`/flashcards/${flashcardId}/interaction`, {
             correct,
-            responseTime: Math.floor(Math.random() * 10) + 2, // Mock response time between 2-12 seconds
+            responseTime: Math.floor(Math.random() * 10) + 2,
           });
-
-          // No need to reload, we'll move to the next card
         } catch (error) {
           console.error("Error recording interaction:", error);
         }
@@ -136,23 +109,16 @@ export default function FlashcardStudyPage() {
       const card = flashcards[currentIndex];
       recordInteraction(card.id, correct);
 
-      // Move to next card
       if (currentIndex < flashcards.length - 1) {
         setCurrentIndex(currentIndex + 1);
         setShowAnswer(false);
       } else {
-        toast({
-          title: "You completed all flashcards!",
-          description: "Great job studying this module.",
-          status: "success",
-          duration: 5000,
-        });
+        toast.success("You completed all flashcards! Great job studying this module.");
       }
     },
-    [currentIndex, flashcards, recordInteraction, toast]
+    [currentIndex, flashcards, recordInteraction]
   );
 
-  // Initial data loading
   useEffect(() => {
     if (sessionData?.user) {
       loadFlashcards();
@@ -161,129 +127,123 @@ export default function FlashcardStudyPage() {
 
   if (loading || isPending) {
     return (
-      <Center h="50vh">
-        <Spinner size="xl" />
-      </Center>
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-100 border-t-primary" />
+      </div>
     );
   }
 
   if (flashcards.length === 0) {
     return (
-      <Box p={8} textAlign="center">
-        <VStack spacing={6}>
-          <Heading size="lg">No Flashcards Available</Heading>
-          <Text>This module doesn&apos;t have any flashcards yet.</Text>
-          <Button
-            colorScheme="primary"
-            leftIcon={<FiPlus />}
-            onClick={generateFlashcards}
-            isLoading={isPending}
-            size="lg"
-          >
+      <div className="p-8 text-center">
+        <div className="flex flex-col items-center gap-6">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            No Flashcards Available
+          </h1>
+          <p className="text-gray-600">
+            This module doesn&apos;t have any flashcards yet.
+          </p>
+          <Button onClick={generateFlashcards} size="lg" disabled={isPending}>
+            <FiPlus />
             Generate Flashcards with AI
           </Button>
-        </VStack>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   const currentCard = flashcards[currentIndex];
 
   return (
-    <Box p={4} maxW="container.lg" mx="auto">
-      <Flex justifyContent="space-between" alignItems="center" mb={6}>
-        <Heading size="lg">Flashcard Study</Heading>
-        <Button
-          leftIcon={<FiRefreshCw />}
-          onClick={loadFlashcards}
-          isLoading={isPending}
-          variant="outline"
-        >
+    <div className="mx-auto max-w-4xl p-4">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Flashcard Study</h1>
+        <Button variant="outline" onClick={loadFlashcards} disabled={isPending}>
+          <FiRefreshCw />
           Refresh
         </Button>
-      </Flex>
+      </div>
 
-      <Progress
-        value={(currentIndex / flashcards.length) * 100}
-        mb={8}
-        borderRadius="md"
-      />
+      <div className="mb-8 h-3 overflow-hidden rounded-md bg-gray-200">
+        <div
+          className="h-full bg-primary transition-all"
+          style={{ width: `${(currentIndex / flashcards.length) * 100}%` }}
+        />
+      </div>
 
-      <Flex justifyContent="space-between" mb={2}>
-        <Text>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-gray-700">
           Card {currentIndex + 1} of {flashcards.length}
-        </Text>
+        </p>
         <Button
           size="sm"
           variant="ghost"
           onClick={generateFlashcards}
-          isLoading={isPending}
+          disabled={isPending}
         >
           Generate More
         </Button>
-      </Flex>
+      </div>
 
-      <Card p={8} mb={6} boxShadow="lg" borderRadius="lg">
-        <Box minH="200px">
+      <div className="mb-6 rounded-2xl bg-white p-8 shadow-lg">
+        <div className="min-h-[200px]">
           {!showAnswer ? (
-            <Box>
-              <Heading size="md" mb={4} color="gray.500">
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-gray-500">
                 Question
-              </Heading>
-              <Text fontSize="xl">{currentCard.question}</Text>
-            </Box>
+              </h2>
+              <p className="text-xl text-gray-900">{currentCard.question}</p>
+            </div>
           ) : (
-            <Box>
-              <Heading size="md" mb={4} color="gray.500">
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-gray-500">
                 Answer
-              </Heading>
-              <Text fontSize="xl">{currentCard.answer}</Text>
-            </Box>
+              </h2>
+              <p className="text-xl text-gray-900">{currentCard.answer}</p>
+            </div>
           )}
-        </Box>
+        </div>
 
         {currentCard.tags && (
-          <Flex mt={4} gap={2} flexWrap="wrap">
+          <div className="mt-4 flex flex-wrap gap-2">
             {currentCard.tags.split(",").map((tag, index) => (
-              <Badge key={index} colorScheme="primary" px={2} py={1}>
+              <span
+                key={index}
+                className="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary"
+              >
                 {tag.trim()}
-              </Badge>
+              </span>
             ))}
-          </Flex>
+          </div>
         )}
-      </Card>
+      </div>
 
       {!showAnswer ? (
-        <Button
-          colorScheme="primary"
-          size="lg"
-          width="full"
-          onClick={() => setShowAnswer(true)}
-        >
+        <Button fullWidth size="lg" onClick={() => setShowAnswer(true)}>
           Show Answer
         </Button>
       ) : (
-        <Flex gap={4}>
-          <IconButton
+        <div className="flex gap-4">
+          <button
+            type="button"
             aria-label="Didn't know"
-            icon={<FiThumbsDown />}
-            colorScheme="red"
-            flex={1}
-            size="lg"
             onClick={() => handleAnswer(false)}
-            isDisabled={isPending}
-          />
-          <IconButton
+            disabled={isPending}
+            className="flex flex-1 items-center justify-center rounded-md bg-error-500 px-6 py-4 text-white transition hover:bg-error-600 disabled:opacity-50"
+          >
+            <FiThumbsDown className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
             aria-label="Got it right"
-            icon={<FiThumbsUp />}
-            colorScheme="green"
-            flex={1}
-            size="lg"
             onClick={() => handleAnswer(true)}
-            isDisabled={isPending}
-          />
-        </Flex>
+            disabled={isPending}
+            className="flex flex-1 items-center justify-center rounded-md bg-success-600 px-6 py-4 text-white transition hover:bg-success-700 disabled:opacity-50"
+          >
+            <FiThumbsUp className="h-5 w-5" />
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

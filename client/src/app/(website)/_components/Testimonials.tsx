@@ -1,12 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Box, Flex, Heading, IconButton, Text, Avatar, Stack, useBreakpointValue } from "@chakra-ui/react";
-import { motion } from "framer-motion";
-import { IoChevronBack, IoChevronForward } from "react-icons/io5";
+import { useState } from "react";
 import { FaQuoteLeft } from "react-icons/fa";
-
-const MotionBox = motion(Box);
+import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 interface TestimonialProps {
   id: number;
@@ -19,210 +15,139 @@ interface TestimonialProps {
 const testimonials: TestimonialProps[] = [
   {
     id: 1,
-    quote: "GrowTeens changed my life. I learned web development skills that helped me secure a freelance job while still in school. The mentors truly care about our success.",
+    quote:
+      "GrowTeens changed my life. I learned web development skills that helped me secure a freelance job while still in school. The mentors truly care about our success.",
     name: "Adewale Johnson",
     title: "Digital Skills Graduate, Lagos",
-    avatarUrl: "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?q=80&w=200&auto=format&fit=crop",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507152832244-10d45c7eda57?q=80&w=200&auto=format&fit=crop",
   },
   {
     id: 2,
-    quote: "The entrepreneurship program gave me the confidence to start my own small business. From idea validation to pitching, they covered everything I needed to know.",
+    quote:
+      "The entrepreneurship program gave me the confidence to start my own small business. From idea validation to pitching, they covered everything I needed to know.",
     name: "Sarah Mensah",
     title: "Entrepreneur, Accra",
-    avatarUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200&auto=format&fit=crop",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200&auto=format&fit=crop",
   },
   {
     id: 3,
-    quote: "I never thought I could be a leader until I joined the leadership program. Now I'm running a community initiative in my neighborhood with skills I learned from GrowTeens.",
+    quote:
+      "I never thought I could be a leader until I joined the leadership program. Now I'm running a community initiative in my neighborhood with skills I learned from GrowTeens.",
     name: "Emmanuel Okafor",
     title: "Leadership Program Alum, Abuja",
-    avatarUrl: "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&auto=format&fit=crop",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=200&auto=format&fit=crop",
   },
   {
     id: 4,
-    quote: "The mentorship I received opened doors I never knew existed. My mentor helped me navigate educational opportunities and scholarship applications successfully.",
+    quote:
+      "The mentorship I received opened doors I never knew existed. My mentor helped me navigate educational opportunities and scholarship applications successfully.",
     name: "Fatima Ahmed",
     title: "University Student, Cairo",
-    avatarUrl: "https://images.unsplash.com/photo-1619970096024-c99f1dd43905?q=80&w=200&auto=format&fit=crop",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1619970096024-c99f1dd43905?q=80&w=200&auto=format&fit=crop",
   },
 ];
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   const handlePrev = () => {
-    setCurrentIndex((prevIndex) => 
+    setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1
     );
   };
-  
+
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => 
+    setCurrentIndex((prevIndex) =>
       prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
     );
   };
-  
+
+  const current = testimonials[currentIndex];
+
   return (
-    <Box 
-      as="section" 
-      py={{ base: 16, md: 24 }}
-      bg="primary.500"
-      position="relative"
-      overflow="hidden"
-    >
-      {/* Decorative elements */}
-      <Box
-        position="absolute"
-        top="-5%"
-        left="-10%"
-        width="300px"
-        height="300px"
-        borderRadius="full"
-        bg="whiteAlpha.100"
-      />
-      <Box
-        position="absolute"
-        bottom="-10%"
-        right="-5%"
-        width="250px"
-        height="250px"
-        borderRadius="full"
-        bg="whiteAlpha.100"
-      />
-      
-      <Box maxW="container.xl" mx="auto" px="5%" position="relative" zIndex="2">
-        <Flex
-          direction="column"
-          align="center"
-          textAlign="center"
-          mb={{ base: 12, md: 16 }}
-        >
-          <MotionBox
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
+    <section className="relative overflow-hidden bg-primary py-16 md:py-24">
+      <div className="absolute -left-[10%] -top-[5%] h-72 w-72 rounded-full bg-white/10" />
+      <div className="absolute -bottom-[10%] -right-[5%] h-64 w-64 rounded-full bg-white/10" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center md:mb-16">
+          <p 
+            className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-tertiary-300"
           >
-            <Text 
-              color="yellow.300" 
-              fontWeight="semibold" 
-              mb={3}
-            >
-              Success Stories
-            </Text>
-          </MotionBox>
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            viewport={{ once: true }}
+            Success Stories
+          </p>
+          <h2
+            className="mx-auto max-w-3xl text-3xl font-bold leading-tight text-white md:text-5xl"
           >
-            <Heading 
-              size={{ base: "xl", md: "2xl" }}
-              color="white"
-              maxW="3xl"
-              mb={4}
-            >
-              Hear from the teens we&apos;ve empowered
-            </Heading> 
-          </MotionBox>
-        </Flex>
-        
-        <Flex direction="column" align="center">
-          <MotionBox
-            key={testimonials[currentIndex].id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4 }}
-            maxW="4xl"
-            mx="auto"
-            textAlign="center"
-            mb={10}
+            Hear from the teens we&apos;ve empowered
+          </h2>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <div
+            className="mx-auto mb-10 max-w-4xl text-center"
           >
-            <Box 
-              color="yellow.300" 
-              fontSize="4xl" 
-              mb={6}
-              display="flex"
-              justifyContent="center"
-            >
+            <div className="mb-6 flex justify-center text-4xl text-tertiary-300">
               <FaQuoteLeft />
-            </Box>
-            <Text
-              fontSize={{ base: "xl", md: "2xl" }}
-              fontWeight="medium"
-              color="white"
-              lineHeight="1.6"
-              mb={8}
-            >
-              {testimonials[currentIndex].quote}
-            </Text>
-            <Stack 
-              direction={{ base: "column", sm: "row" }} 
-              spacing={4} 
-              justify="center"
-              align="center"
-            >
-              <Avatar 
-                size="lg" 
-                src={testimonials[currentIndex].avatarUrl}
-                name={testimonials[currentIndex].name}
-                border="3px solid"
-                borderColor="yellow.300"
-              />
-              <Box textAlign={{ base: "center", sm: "left" }}>
-                <Text fontWeight="bold" color="white">
-                  {testimonials[currentIndex].name}
-                </Text>
-                <Text color="whiteAlpha.800">
-                  {testimonials[currentIndex].title}
-                </Text>
-              </Box>
-            </Stack>
-          </MotionBox>
-          
-          <Flex justify="center" align="center" mt={4}>
-            <IconButton
+            </div>
+            <p className="mb-8 text-xl font-medium leading-9 text-white md:text-3xl md:leading-relaxed">
+              {current.quote}
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-[3px] border-tertiary-300">
+                <img
+                  src={current.avatarUrl}
+                  alt={current.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="font-bold text-white">{current.name}</p>
+                <p className="text-white/80">{current.title}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center">
+            <button
+              type="button"
               aria-label="Previous testimonial"
-              icon={<IoChevronBack size={20} />}
               onClick={handlePrev}
-              colorScheme="whiteAlpha"
-              variant="ghost"
-              size={isMobile ? "md" : "lg"}
-              mx={2}
-            />
-            
-            {/* Pagination dots */}
-            <Flex mx={4}>
-              {testimonials.map((_, index) => (
-                <Box
-                  key={index}
-                  w={2}
-                  h={2}
-                  borderRadius="full"
-                  bg={index === currentIndex ? "yellow.300" : "whiteAlpha.400"}
-                  mx={1}
-                  cursor="pointer"
+              className="mx-2 rounded-full p-3 text-white transition-colors hover:bg-white/10"
+            >
+              <IoChevronBack className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
+
+            <div className="mx-4 flex">
+              {testimonials.map((testimonial, index) => (
+                <button
+                  key={testimonial.id}
+                  type="button"
+                  aria-label={`Go to testimonial ${index + 1}`}
                   onClick={() => setCurrentIndex(index)}
+                  className={`mx-1 h-2.5 w-2.5 rounded-full transition-colors ${
+                    index === currentIndex ? "bg-tertiary-300" : "bg-white/40"
+                  }`}
                 />
               ))}
-            </Flex>
-            
-            <IconButton
+            </div>
+
+            <button
+              type="button"
               aria-label="Next testimonial"
-              icon={<IoChevronForward size={20} />}
               onClick={handleNext}
-              colorScheme="whiteAlpha"
-              variant="ghost"
-              size={isMobile ? "md" : "lg"}
-              mx={2}
-            />
-          </Flex>
-        </Flex>
-      </Box>
-    </Box>
+              className="mx-2 rounded-full p-3 text-white transition-colors hover:bg-white/10"
+            >
+              <IoChevronForward className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

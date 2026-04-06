@@ -1,27 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import requestClient from "@/lib/requestClient";
-import { NextAuthUserSession } from "@/types";
-import { useSession } from "next-auth/react";
-import {
-  Box,
-  Button,
-  Card,
-  CardBody,
-  Flex,
-  Heading,
-  Image,
-  ListItem,
-  SimpleGrid,
-  Text,
-  UnorderedList,
-} from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import LoadingState from "@/app/(protected)/_components/LoadingState";
+import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
+
+import { Button } from "@/components/ui/Button";
+import LoadingState from "@/app/(protected)/_components/LoadingState";
+import requestClient from "@/lib/requestClient";
+import { NextAuthUserSession } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -38,7 +27,6 @@ const Page = ({ params: paramsPromise }: PageProps) => {
 
   const session = useSession();
   const sessionData = session?.data as NextAuthUserSession;
-
   const userId = sessionData?.user?.id;
 
   useEffect(() => {
@@ -112,110 +100,94 @@ const Page = ({ params: paramsPromise }: PageProps) => {
   };
 
   return (
-    <Box p={5}>
+    <div className="p-5">
       {loading ? (
         <LoadingState />
       ) : (
-        <Box className="border rounded-lg shadow-sm bg-white p-4">
-          <Flex
-            cursor="pointer"
+        <div className="rounded-lg border bg-white p-4 shadow-sm">
+          <button
+            type="button"
+            className="flex cursor-pointer items-center gap-2"
             onClick={() => router.back()}
-            align="center"
-            gap={2}
           >
-            <ArrowLeft className="w-5 h-auto text-gray-500" />
-            <Text fontSize="14px" color="gray.600">
-              Back
-            </Text>
-          </Flex>
+            <ArrowLeft className="h-auto w-5 text-gray-500" />
+            <span className="text-sm text-gray-600">Back</span>
+          </button>
 
-          <Box p={8}>
-            <Heading mb={2}>{program?.title}</Heading>
-            <Text fontSize="md" color="gray.600" mb={4}>
-              {program?.description}
-            </Text>
+          <div className="p-8">
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">
+              {program?.title}
+            </h1>
+            <p className="mb-4 text-base text-gray-600">{program?.description}</p>
 
             {program?.image && (
-              <Image
+              <img
                 src={program?.image}
                 alt={program?.title}
-                boxSize="500px"
-                w="full"
-                borderRadius="md"
-                mb={6}
+                className="mb-6 h-auto w-full rounded-md object-cover"
               />
             )}
 
             {enrollmentStatus?.enrolled ? (
-              <Box mb={6}>
-                <Text fontSize="md" color="green.600" mb={2}>
+              <div className="mb-6">
+                <p className="mb-2 text-base text-success-600">
                   You are enrolled in this course.
-                </Text>
+                </p>
                 {enrollmentStatus.enrollmentStatus === "ACTIVE" &&
                   enrollmentStatus.enrolledAt && (
-                    <Text fontSize="sm">
+                    <p className="text-sm text-gray-700">
                       Enrolled on:{" "}
-                      {new Date(
-                        enrollmentStatus.enrolledAt
-                      ).toLocaleDateString()}
-                    </Text>
+                      {new Date(enrollmentStatus.enrolledAt).toLocaleDateString()}
+                    </p>
                   )}
                 {enrollmentStatus.enrollmentStatus === "COMPLETED" && (
-                  <Text fontSize="sm" color="blue.600">
-                    Course Completed
-                  </Text>
+                  <p className="text-sm text-secondary-600">Course Completed</p>
                 )}
-              </Box>
+              </div>
             ) : (
               <Button
-                colorScheme="red"
+                className="mb-6 bg-error-500 hover:bg-error-600"
                 onClick={handleEnroll}
-                isLoading={isPending}
-                loadingText="Enrolling..."
-                mb={6}
+                disabled={isPending}
               >
-                Enroll Now
+                {isPending ? "Enrolling..." : "Enroll Now"}
               </Button>
             )}
 
-            <Heading size="md" mb={3}>
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">
               Course Modules
-            </Heading>
+            </h2>
             {program?.modules && program?.modules.length > 0 ? (
-              <SimpleGrid
-                columns={{ base: 1, md: 2, lg: 3 }}
-                spacing={6}
-                mb={6}
-              >
+              <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {program?.modules.map((module: any) => (
-                  <Card
+                  <button
+                    type="button"
                     key={module.id}
                     onClick={() => setSelectedModule(module)}
+                    className="rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md"
                   >
-                    <CardBody>
-                      <Heading size="sm">{module.title}</Heading>
-                      <Text>{module.description}</Text>
-                    </CardBody>
-                  </Card>
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      {module.title}
+                    </h3>
+                    <p className="text-gray-600">{module.description}</p>
+                  </button>
                 ))}
-              </SimpleGrid>
+              </div>
             ) : (
-              <Text>No modules found.</Text>
+              <p className="text-gray-600">No modules found.</p>
             )}
 
             {selectedModule && (
-              <UnorderedList>
-                {JSON.parse(selectedModule.content).map(
-                  (item: string, i: any) => (
-                    <ListItem key={i}>{item}</ListItem>
-                  )
-                )}
-              </UnorderedList>
+              <ul className="list-disc space-y-2 pl-6 text-gray-700">
+                {JSON.parse(selectedModule.content).map((item: string, i: any) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

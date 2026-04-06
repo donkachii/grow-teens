@@ -1,15 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Flex,
-  Button,
-  IconButton,
-  Text,
-  Box,
-  useColorModeValue,
-  useBreakpointValue,
-  VisuallyHidden,
-} from "@chakra-ui/react";
-import { FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
+  FiChevronLeft,
+  FiChevronRight,
+  FiChevronsLeft,
+  FiChevronsRight,
+} from "react-icons/fi";
+
+import { Button } from "@/components/ui/Button";
 
 interface PaginationProps {
   currentPage: number;
@@ -34,7 +31,6 @@ const Pagination: React.FC<PaginationProps> = ({
   itemsPerPage,
   showingItems,
   onPageChange,
-  colorScheme = "primary",
   showArrows = true,
   showFirstLast = false,
   maxDisplayedPages = 5,
@@ -42,172 +38,174 @@ const Pagination: React.FC<PaginationProps> = ({
   size = "sm",
   isLoading = false,
 }) => {
-  const mutedTextColor = useColorModeValue("gray.500", "gray.400");
-  const showCountText = useBreakpointValue({ base: false, md: showItemCount });
-  
-  // Calculate the visible page numbers
+  const [showCountText, setShowCountText] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      setShowCountText(window.innerWidth >= 768 && showItemCount);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [showItemCount]);
+
   const visiblePageNumbers = useMemo(() => {
     if (totalPages <= maxDisplayedPages) {
-      // If we have fewer pages than the max to display, show all
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-    
-    // Calculate start and end page numbers to display
+
     let startPage = Math.max(currentPage - Math.floor(maxDisplayedPages / 2), 1);
     let endPage = startPage + maxDisplayedPages - 1;
-    
-    // Adjust if we're near the end
+
     if (endPage > totalPages) {
       endPage = totalPages;
       startPage = Math.max(endPage - maxDisplayedPages + 1, 1);
     }
-    
-    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
   }, [currentPage, totalPages, maxDisplayedPages]);
 
-  // Handle going to a specific page
   const handleGoToPage = (page: number) => {
     if (page !== currentPage && page >= 1 && page <= totalPages && !isLoading) {
       onPageChange(page);
     }
   };
 
-  // Calculate item counts for display
   const itemCountText = useMemo(() => {
     if (!showCountText || !totalItems) return null;
-    
-    const startItem = Math.min((currentPage - 1) * (itemsPerPage || 10) + 1, totalItems);
-    const endItem = Math.min(startItem + (showingItems || itemsPerPage || 10) - 1, totalItems);
-    
+
+    const startItem = Math.min(
+      (currentPage - 1) * (itemsPerPage || 10) + 1,
+      totalItems
+    );
+    const endItem = Math.min(
+      startItem + (showingItems || itemsPerPage || 10) - 1,
+      totalItems
+    );
+
     return `Showing ${startItem}-${endItem} of ${totalItems} items`;
   }, [currentPage, totalItems, itemsPerPage, showingItems, showCountText]);
 
+  const buttonClass =
+    size === "xs"
+      ? "px-2 py-1 text-xs"
+      : size === "sm"
+      ? "px-3 py-2 text-sm"
+      : size === "lg"
+      ? "px-5 py-3 text-lg"
+      : "px-4 py-2 text-base";
+
   return (
-    <Flex 
-      justify="space-between" 
-      align="center" 
-      mt={6} 
-      w="100%"
-      flexDir={{ base: showCountText ? "column" : "row", md: "row" }}
-      gap={{ base: 3, md: 0 }}
-    >
+    <div className="mt-6 flex w-full flex-col items-center justify-between gap-3 md:flex-row">
       {showCountText && itemCountText && (
-        <Text color={mutedTextColor} fontSize={size}>
-          {itemCountText}
-        </Text>
+        <p className="text-sm text-gray-500">{itemCountText}</p>
       )}
-      
-      <Box ml={{ base: 0, md: showCountText ? "auto" : 0 }}>
-        <Flex align="center" justify="center">
+
+      <div className={`${showCountText ? "md:ml-auto" : ""}`}>
+        <div className="flex items-center justify-center">
           {showFirstLast && (
-            <IconButton
+            <button
+              type="button"
               aria-label="Go to first page"
-              icon={<FiChevronsLeft />}
-              size={size}
-              variant="ghost"
-              mr={1}
-              isDisabled={currentPage === 1 || isLoading}
+              className="mr-1 rounded-md p-2 text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage === 1 || isLoading}
               onClick={() => handleGoToPage(1)}
-            />
+            >
+              <FiChevronsLeft />
+            </button>
           )}
-          
+
           {showArrows && (
-            <IconButton
+            <button
+              type="button"
               aria-label="Previous page"
-              icon={<FiChevronLeft />}
-              size={size}
-              mr={2}
-              isDisabled={currentPage === 1 || isLoading}
+              className="mr-2 rounded-md p-2 text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage === 1 || isLoading}
               onClick={() => handleGoToPage(currentPage - 1)}
-            />
+            >
+              <FiChevronLeft />
+            </button>
           )}
-          
-          {/* First page (if not in visible range) */}
+
           {visiblePageNumbers[0] > 1 && (
             <>
               <Button
-                size={size}
+                size="sm"
                 variant="outline"
-                colorScheme="gray"
-                mx={1}
+                className={buttonClass}
                 onClick={() => handleGoToPage(1)}
-                isDisabled={isLoading}
+                disabled={isLoading}
               >
                 1
               </Button>
               {visiblePageNumbers[0] > 2 && (
-                <Text mx={1} color={mutedTextColor}>
-                  ...
-                </Text>
+                <span className="mx-1 text-gray-500">...</span>
               )}
             </>
           )}
-          
-          {/* Visible page numbers */}
+
           {visiblePageNumbers.map((pageNum) => (
             <Button
               key={pageNum}
-              size={size}
-              variant={currentPage === pageNum ? "solid" : "outline"}
-              colorScheme={currentPage === pageNum ? colorScheme : "gray"}
-              mx={1}
+              size="sm"
+              variant={currentPage === pageNum ? "primary" : "outline"}
+              className={`mx-1 ${buttonClass}`}
               onClick={() => handleGoToPage(pageNum)}
-              isDisabled={isLoading}
+              disabled={isLoading}
               aria-current={currentPage === pageNum ? "page" : undefined}
             >
               {pageNum}
               {currentPage === pageNum && (
-                <VisuallyHidden>(current)</VisuallyHidden>
+                <span className="sr-only">(current)</span>
               )}
             </Button>
           ))}
-          
-          {/* Last page (if not in visible range) */}
+
           {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages && (
             <>
-              {visiblePageNumbers[visiblePageNumbers.length - 1] < totalPages - 1 && (
-                <Text mx={1} color={mutedTextColor}>
-                  ...
-                </Text>
-              )}
+              {visiblePageNumbers[visiblePageNumbers.length - 1] <
+                totalPages - 1 && <span className="mx-1 text-gray-500">...</span>}
               <Button
-                size={size}
+                size="sm"
                 variant="outline"
-                colorScheme="gray"
-                mx={1}
+                className={buttonClass}
                 onClick={() => handleGoToPage(totalPages)}
-                isDisabled={isLoading}
+                disabled={isLoading}
               >
                 {totalPages}
               </Button>
             </>
           )}
-          
+
           {showArrows && (
-            <IconButton
+            <button
+              type="button"
               aria-label="Next page"
-              icon={<FiChevronRight />}
-              size={size}
-              ml={2}
-              isDisabled={currentPage === totalPages || isLoading}
+              className="ml-2 rounded-md p-2 text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage === totalPages || isLoading}
               onClick={() => handleGoToPage(currentPage + 1)}
-            />
+            >
+              <FiChevronRight />
+            </button>
           )}
-          
+
           {showFirstLast && (
-            <IconButton
+            <button
+              type="button"
               aria-label="Go to last page"
-              icon={<FiChevronsRight />}
-              size={size}
-              variant="ghost"
-              ml={1}
-              isDisabled={currentPage === totalPages || isLoading}
+              className="ml-1 rounded-md p-2 text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage === totalPages || isLoading}
               onClick={() => handleGoToPage(totalPages)}
-            />
+            >
+              <FiChevronsRight />
+            </button>
           )}
-        </Flex>
-      </Box>
-    </Flex>
+        </div>
+      </div>
+    </div>
   );
 };
 

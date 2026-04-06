@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import Provider from "./provider";
 import "./globals.css";
 import GrowTeensLogo from "@public/icons/logo.svg";
 import GrowTeensLogoThumbnailImage from "@public/icons/logo.svg";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 
 const appName = "GrowTeens";
 // const appUrl = "";
@@ -47,9 +53,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <Provider>{children}</Provider>

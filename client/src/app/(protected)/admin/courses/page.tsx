@@ -6,6 +6,8 @@ import {
   Button,
   Container,
   Flex,
+  FormControl,
+  FormLabel,
   Grid,
   Heading,
   Icon,
@@ -13,9 +15,20 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Select,
   SimpleGrid,
   Spinner,
+  Stack,
+  Tag,
+  TagCloseButton,
+  TagLabel,
   Text,
   Tooltip,
   useColorModeValue,
@@ -27,6 +40,8 @@ import {
   useBreakpointValue,
   IconButton,
   Switch,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
 import {
   FiPlus,
@@ -37,6 +52,7 @@ import {
   FiStar,
   FiGrid,
   FiList,
+  FiTag,
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import DetailsDrawer from "./_components/DetailsDrawer";
@@ -45,35 +61,35 @@ import DeleteConfirmationModal from "./_components/DeleteConfirmationModal";
 import { Course, NextAuthUserSession } from "@/types";
 import Pagination from "../../_components/Pagination";
 
-import { courseService, AdminCourseListParams } from "@/services/api";
+import { courseService, categoryService, Category, AdminCourseListParams } from "@/services/api";
+import { handleServerErrorMessage } from "@/utils";
 
 import { useSession } from "next-auth/react";
 
 const MotionBox = motion(Box);
 
-// Define the FormData type based on CourseFormModal
 interface CourseFormData {
   title: string;
   description: string;
-  overview: string;
-  type: string;
+  categoryId: number;
   difficulty: string;
   durationHours: number;
-  instructorId: number; // Or maybe fetch/select instructor?
-  isFeatured: number; // Changed to number
-  isPublished: number; // Changed to number
-  // Add any other fields your form manages
+  instructorId: number;
+  isFeatured: number;
+  isPublished: number;
 }
 
 const AdminCoursesPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState<number | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,29 +100,30 @@ const AdminCoursesPage = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // == Re-added Form State ==
   const initialFormData: CourseFormData = {
     title: "",
     description: "",
-    overview: "",
-    type: "PERSONAL_DEVELOPMENT", // Default type
-    difficulty: "BEGINNER", // Default difficulty
+    categoryId: 0,
+    difficulty: "BEGINNER",
     durationHours: 0,
-    instructorId: 0, // How is instructor assigned? Needs logic.
-    isFeatured: 0, // Changed to 0
-    isPublished: 0, // Changed to 0
+    instructorId: 0,
+    isFeatured: 0,
+    isPublished: 0,
   };
   const [formData, setFormData] = useState<CourseFormData>(initialFormData);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
-  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
-  // =======================
 
   const toast = useToast();
   const courseFormModal = useDisclosure();
   const deleteConfirmation = useDisclosure();
   const detailsDrawer = useDisclosure();
+  const categoryModal = useDisclosure();
+
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDesc, setNewCategoryDesc] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
   const cardBg = useColorModeValue("white", "gray.800");
   const cardHoverBg = useColorModeValue("gray.50", "gray.700");
@@ -129,6 +146,24 @@ const AdminCoursesPage = () => {
   };
   const token = sessionData?.user?.token;
 
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const res = await categoryService.getCategories();
+      // GET /categories returns a plain array; Axios wraps it in res.data
+      const list: Category[] = (res as any)?.data ?? [];
+      setCategories(list);
+    } catch {
+      toast({ title: "Could not load categories", status: "warning", duration: 4000, isClosable: true });
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const fetchCourses = useCallback(
     async (page = 1) => {
       if (!token) return;
@@ -142,7 +177,7 @@ const AdminCoursesPage = () => {
           limit: 10,
         };
         if (searchQuery) params.search = searchQuery;
-        if (typeFilter) params.type = typeFilter;
+        if (categoryFilter) params.categoryId = categoryFilter;
         if (difficultyFilter) params.difficulty = difficultyFilter;
 
         if (statusFilter === "published") params.isPublished = true;
@@ -153,11 +188,10 @@ const AdminCoursesPage = () => {
 
         setCourses(response?.data?.data || []);
         setTotalPages(response?.data?.pagination?.totalPages || 1);
-      } catch (err: any) {
-        console.error("Error fetching courses:", err);
+      } catch (err) {
         toast({
           title: "Error Fetching Courses",
-          description: err.message || "Could not load course data.",
+          description: handleServerErrorMessage(err),
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -168,7 +202,7 @@ const AdminCoursesPage = () => {
         setIsLoading(false);
       }
     },
-    [token, searchQuery, typeFilter, difficultyFilter, statusFilter]
+    [token, searchQuery, categoryFilter, difficultyFilter, statusFilter]
   );
 
   useEffect(() => {
@@ -191,82 +225,61 @@ const AdminCoursesPage = () => {
     fetchCourses(newPage);
   };
 
-  // == Re-added Form Handlers ==
   const handleFormChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
-    // Handle number conversion for relevant fields
     const newValue =
-      name === "durationHours" || name === "instructorId"
+      name === "durationHours" || name === "instructorId" || name === "categoryId"
         ? parseInt(value, 10) || 0
         : value;
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({ ...prev, [name]: checked ? 1 : 0 })); // Set 1 or 0
+    setFormData((prev) => ({ ...prev, [name]: checked ? 1 : 0 }));
   };
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "thumbnail" | "coverImage"
+    type: "thumbnail"
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const previewUrl = URL.createObjectURL(file);
-      if (type === "thumbnail") {
-        setThumbnailFile(file);
-        setThumbnailPreview(previewUrl);
-      } else {
-        setCoverImageFile(file);
-        setCoverImagePreview(previewUrl);
-      }
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
     } else {
-      // Handle file removal
-      if (type === "thumbnail") {
-        setThumbnailFile(null);
-        setThumbnailPreview("");
-      } else {
-        setCoverImageFile(null);
-        setCoverImagePreview("");
-      }
+      setThumbnailFile(null);
+      setThumbnailPreview("");
     }
   };
-  // ==========================
 
   const handleAddCourseClick = () => {
     setSelectedCourse(null);
     setIsEditMode(false);
-    setFormData(initialFormData); // Reset form
+    setFormData(initialFormData);
     setThumbnailFile(null);
-    setCoverImageFile(null);
     setThumbnailPreview("");
-    setCoverImagePreview("");
     courseFormModal.onOpen();
   };
 
   const handleEditCourseClick = (course: Course) => {
     setSelectedCourse(course);
     setIsEditMode(true);
-    // Populate form with selected course data
     setFormData({
       title: course.title || "",
       description: course.description || "",
-      overview: course.overview || "",
-      type: course.type || "PERSONAL_DEVELOPMENT",
+      categoryId: course.categoryId || 0,
       difficulty: course.difficulty || "BEGINNER",
       durationHours: course.durationHours || 0,
-      instructorId: course.instructor?.id || 0, // Adjust if needed
-      isFeatured: course.isFeatured ? 1 : 0, // Convert boolean to 1/0
-      isPublished: course.isPublished ? 1 : 0, // Convert boolean to 1/0
+      instructorId: course.instructor?.id || 0,
+      isFeatured: course.isFeatured ? 1 : 0,
+      isPublished: course.isPublished ? 1 : 0,
     });
-    setThumbnailFile(null); // Don't re-upload existing files unless changed
-    setCoverImageFile(null);
+    setThumbnailFile(null);
     setThumbnailPreview(course.thumbnail || "");
-    setCoverImagePreview(course.coverImage || "");
     courseFormModal.onOpen();
   };
 
@@ -287,56 +300,25 @@ const AdminCoursesPage = () => {
     const dataToSubmit = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
-
-      if (value instanceof File) {
-        dataToSubmit.append(key, value);
-      } else if (Array.isArray(value)) {
-        value.forEach((item) => {
-          dataToSubmit.append(key, String(item));
-        });
-      } else {
-        dataToSubmit.append(key, String(value));
-      }
+      dataToSubmit.append(key, String(value));
     });
 
     if (thumbnailFile) {
       dataToSubmit.append("thumbnail", thumbnailFile);
     }
-    if (coverImageFile) {
-      dataToSubmit.append("coverImage", coverImageFile);
-    }
 
     try {
       if (isEditMode && selectedCourse) {
-        // Assuming updateCourse accepts FormData
-        await courseService.updateCourse(
-          token,
-          selectedCourse.id,
-          dataToSubmit
-        );
-        toast({
-          title: "Success",
-          description: "Course updated successfully.",
-          status: "success",
-        });
+        await courseService.updateCourse(token, selectedCourse.id, dataToSubmit);
+        toast({ title: "Success", description: "Course updated successfully.", status: "success" });
       } else {
-        // Assuming createCourse accepts FormData
         await courseService.createCourse(token, dataToSubmit);
-        toast({
-          title: "Success",
-          description: "Course created successfully.",
-          status: "success",
-        });
+        toast({ title: "Success", description: "Course created successfully.", status: "success" });
       }
       courseFormModal.onClose();
       fetchCourses(isEditMode ? currentPage : 1);
-    } catch (err: any) {
-      console.error("Error submitting course:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to save course.",
-        status: "error",
-      });
+    } catch (err) {
+      toast({ title: "Error", description: handleServerErrorMessage(err), status: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -347,23 +329,14 @@ const AdminCoursesPage = () => {
     setIsDeleting(true);
     try {
       await courseService.deleteCourse(token, selectedCourse.id);
-      toast({
-        title: "Success",
-        description: "Course deleted successfully.",
-        status: "success",
-      });
+      toast({ title: "Success", description: "Course deleted successfully.", status: "success" });
       deleteConfirmation.onClose();
       const newPage =
         courses.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
       fetchCourses(newPage);
       setSelectedCourse(null);
-    } catch (err: any) {
-      console.error("Error deleting course:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to delete course.",
-        status: "error",
-      });
+    } catch (err) {
+      toast({ title: "Error", description: handleServerErrorMessage(err), status: "error" });
     } finally {
       setIsDeleting(false);
     }
@@ -374,9 +347,7 @@ const AdminCoursesPage = () => {
     setIsToggling(course.id);
     try {
       const updatedStatus = !course.isPublished;
-      await courseService.togglePublish(token, course.id, {
-        isPublished: updatedStatus,
-      });
+      await courseService.togglePublish(token, course.id, { isPublished: updatedStatus });
       toast({
         title: "Success",
         description: `Course ${updatedStatus ? "published" : "unpublished"}.`,
@@ -384,30 +355,63 @@ const AdminCoursesPage = () => {
         duration: 3000,
       });
       fetchCourses(currentPage);
-    } catch (err: any) {
-      console.error("Error toggling publish status:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update status.",
-        status: "error",
-      });
+    } catch (err) {
+      toast({ title: "Error", description: handleServerErrorMessage(err), status: "error" });
     } finally {
       setIsToggling(null);
     }
   };
 
+  const handleCreateCategory = async () => {
+    if (!token || !newCategoryName.trim()) return;
+
+    const duplicate = categories.find(
+      (c) => c.name.toLowerCase() === newCategoryName.trim().toLowerCase()
+    );
+    if (duplicate) {
+      toast({ title: `"${duplicate.name}" already exists.`, status: "warning", duration: 3000 });
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    try {
+      await categoryService.createCategory(token, {
+        name: newCategoryName.trim(),
+        description: newCategoryDesc.trim() || undefined,
+      });
+      setNewCategoryName("");
+      setNewCategoryDesc("");
+      // Re-fetch to keep state in sync with server
+      await fetchCategories();
+      toast({ title: `"${newCategoryName.trim()}" added.`, status: "success", duration: 2000 });
+    } catch (err) {
+      toast({ title: "Error", description: handleServerErrorMessage(err), status: "error" });
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (cat: Category) => {
+    if (!token) return;
+    setDeletingCategoryId(cat.id);
+    try {
+      await categoryService.deleteCategory(token, cat.id);
+      await fetchCategories();
+      toast({ title: `"${cat.name}" deleted.`, status: "success", duration: 2000 });
+    } catch (err) {
+      toast({ title: "Error", description: handleServerErrorMessage(err), status: "error" });
+    } finally {
+      setDeletingCategoryId(null);
+    }
+  };
+
   const getDifficultyColor = (difficulty: string = "BEGINNER") => {
     switch (difficulty?.toUpperCase()) {
-      case "BEGINNER":
-        return "green";
-      case "INTERMEDIATE":
-        return "orange";
-      case "ADVANCED":
-        return "red";
-      case "EXPERT":
-        return "purple";
-      default:
-        return "gray";
+      case "BEGINNER": return "green";
+      case "INTERMEDIATE": return "orange";
+      case "ADVANCED": return "red";
+      case "EXPERT": return "purple";
+      default: return "gray";
     }
   };
 
@@ -423,11 +427,7 @@ const AdminCoursesPage = () => {
             borderColor={borderColor}
             borderRadius="lg"
             overflow="hidden"
-            _hover={{
-              boxShadow: "md",
-              bg: cardHoverBg,
-              transform: "translateY(-2px)",
-            }}
+            _hover={{ boxShadow: "md", bg: cardHoverBg, transform: "translateY(-2px)" }}
           >
             <Image
               src={course.thumbnail || "/placeholder-image.png"}
@@ -438,36 +438,23 @@ const AdminCoursesPage = () => {
             />
             <Box p={4}>
               <HStack justify="space-between" align="start" mb={2}>
-                <Heading size="sm" noOfLines={2}>
-                  {course.title}
-                </Heading>
-                <Badge
-                  colorScheme={course.isPublished ? "green" : "yellow"}
-                  fontSize="xs"
-                >
+                <Heading size="sm" noOfLines={2}>{course.title}</Heading>
+                <Badge colorScheme={course.isPublished ? "green" : "yellow"} fontSize="xs">
                   {course.isPublished ? "Published" : "Draft"}
                 </Badge>
               </HStack>
               <Text fontSize="xs" color={mutedTextColor} mb={1}>
-                Instructor: {course.instructor?.firstName}{" "}
-                {course.instructor?.lastName || "N/A"}
+                Instructor: {course.instructor?.firstName} {course.instructor?.lastName || "N/A"}
               </Text>
               <HStack spacing={2} mb={2}>
-                <Badge
-                  colorScheme={getDifficultyColor(
-                    course.difficulty || "BEGINNER"
-                  )}
-                  fontSize="xs"
-                >
+                <Badge colorScheme={getDifficultyColor(course.difficulty || "BEGINNER")} fontSize="xs">
                   {course.difficulty || "BEGINNER"}
                 </Badge>
-                <Badge colorScheme="blue" fontSize="xs">
-                  {course.type || "N/A"}
-                </Badge>
+                {course.category && (
+                  <Badge colorScheme="blue" fontSize="xs">{course.category.name}</Badge>
+                )}
                 {course.isFeatured && (
-                  <Badge colorScheme="purple" fontSize="xs">
-                    Featured
-                  </Badge>
+                  <Badge colorScheme="purple" fontSize="xs">Featured</Badge>
                 )}
               </HStack>
               <Text fontSize="sm" color={mutedTextColor} noOfLines={3} mb={3}>
@@ -486,32 +473,13 @@ const AdminCoursesPage = () => {
                 </Tooltip>
                 <HStack spacing={1}>
                   <Tooltip label="View Details" hasArrow>
-                    <IconButton
-                      icon={<FiEye />}
-                      size="xs"
-                      variant="ghost"
-                      aria-label="View Details"
-                      onClick={() => handleViewDetailsClick(course)}
-                    />
+                    <IconButton icon={<FiEye />} size="xs" variant="ghost" aria-label="View Details" onClick={() => handleViewDetailsClick(course)} />
                   </Tooltip>
                   <Tooltip label="Edit Course" hasArrow>
-                    <IconButton
-                      icon={<FiEdit2 />}
-                      size="xs"
-                      variant="ghost"
-                      aria-label="Edit Course"
-                      onClick={() => handleEditCourseClick(course)}
-                    />
+                    <IconButton icon={<FiEdit2 />} size="xs" variant="ghost" aria-label="Edit Course" onClick={() => handleEditCourseClick(course)} />
                   </Tooltip>
                   <Tooltip label="Delete Course" hasArrow>
-                    <IconButton
-                      icon={<FiTrash2 />}
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="red"
-                      aria-label="Delete Course"
-                      onClick={() => handleDeleteClick(course)}
-                    />
+                    <IconButton icon={<FiTrash2 />} size="xs" variant="ghost" colorScheme="red" aria-label="Delete Course" onClick={() => handleDeleteClick(course)} />
                   </Tooltip>
                 </HStack>
               </Flex>
@@ -544,18 +512,14 @@ const AdminCoursesPage = () => {
       >
         <Text>Title</Text>
         <Text>Instructor</Text>
-        <Text>Type</Text>
+        <Text>Category</Text>
         <Text>Difficulty</Text>
         <Text>Enrollments</Text>
         <Text>Status</Text>
         <Text>Actions</Text>
       </Grid>
       {courses.map((course) => (
-        <MotionBox
-          key={course.id}
-          variants={itemVariants}
-          _hover={{ bg: cardHoverBg }}
-        >
+        <MotionBox key={course.id} variants={itemVariants} _hover={{ bg: cardHoverBg }}>
           <Grid
             templateColumns="minmax(100px, 3fr) repeat(5, 1fr) auto"
             gap={4}
@@ -566,35 +530,22 @@ const AdminCoursesPage = () => {
             fontSize="sm"
           >
             <Tooltip label={course.title} placement="top-start" hasArrow>
-              <Text fontWeight="medium" noOfLines={1}>
-                {course.title}
-              </Text>
+              <Text fontWeight="medium" noOfLines={1}>{course.title}</Text>
             </Tooltip>
             <Text noOfLines={1}>
-              {course.instructor?.firstName}{" "}
-              {course.instructor?.lastName || "N/A"}
+              {course.instructor?.firstName} {course.instructor?.lastName || "N/A"}
             </Text>
             <Text>
-              <Badge colorScheme="blue" fontSize="xs">
-                {course.type || "N/A"}
-              </Badge>
+              <Badge colorScheme="blue" fontSize="xs">{course.category?.name || "N/A"}</Badge>
             </Text>
             <Text>
-              <Badge
-                colorScheme={getDifficultyColor(
-                  course.difficulty || "BEGINNER"
-                )}
-                fontSize="xs"
-              >
+              <Badge colorScheme={getDifficultyColor(course.difficulty || "BEGINNER")} fontSize="xs">
                 {course.difficulty || "BEGINNER"}
               </Badge>
             </Text>
             <Text>{course._count?.enrollments ?? 0}</Text>
             <Flex align="center">
-              <Tooltip
-                label={course.isPublished ? "Published" : "Draft"}
-                hasArrow
-              >
+              <Tooltip label={course.isPublished ? "Published" : "Draft"} hasArrow>
                 <Switch
                   colorScheme="green"
                   isChecked={course.isPublished}
@@ -604,38 +555,17 @@ const AdminCoursesPage = () => {
                   mr={2}
                 />
               </Tooltip>
-              {course.isFeatured && (
-                <Icon as={FiStar} color="purple.500" title="Featured" />
-              )}
+              {course.isFeatured && <Icon as={FiStar} color="purple.500" title="Featured" />}
             </Flex>
             <HStack spacing={1} justifySelf="end">
               <Tooltip label="View Details" hasArrow>
-                <IconButton
-                  icon={<FiEye />}
-                  size="xs"
-                  variant="ghost"
-                  aria-label="View Details"
-                  onClick={() => handleViewDetailsClick(course)}
-                />
+                <IconButton icon={<FiEye />} size="xs" variant="ghost" aria-label="View Details" onClick={() => handleViewDetailsClick(course)} />
               </Tooltip>
               <Tooltip label="Edit Course" hasArrow>
-                <IconButton
-                  icon={<FiEdit2 />}
-                  size="xs"
-                  variant="ghost"
-                  aria-label="Edit Course"
-                  onClick={() => handleEditCourseClick(course)}
-                />
+                <IconButton icon={<FiEdit2 />} size="xs" variant="ghost" aria-label="Edit Course" onClick={() => handleEditCourseClick(course)} />
               </Tooltip>
               <Tooltip label="Delete Course" hasArrow>
-                <IconButton
-                  icon={<FiTrash2 />}
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="red"
-                  aria-label="Delete Course"
-                  onClick={() => handleDeleteClick(course)}
-                />
+                <IconButton icon={<FiTrash2 />} size="xs" variant="ghost" colorScheme="red" aria-label="Delete Course" onClick={() => handleDeleteClick(course)} />
               </Tooltip>
             </HStack>
           </Grid>
@@ -648,13 +578,19 @@ const AdminCoursesPage = () => {
     <Container maxW="container.xl" py={8}>
       <Flex justify="space-between" align="center" mb={6} wrap="wrap" gap={4}>
         <Heading size="lg">Manage Courses</Heading>
-        <Button
-          leftIcon={<FiPlus />}
-          colorScheme="blue"
-          onClick={handleAddCourseClick}
-        >
-          Add New Course
-        </Button>
+        <HStack>
+          <Button
+            leftIcon={<FiTag />}
+            variant="outline"
+            size="sm"
+            onClick={categoryModal.onOpen}
+          >
+            Manage Categories
+          </Button>
+          <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={handleAddCourseClick}>
+            Add New Course
+          </Button>
+        </HStack>
       </Flex>
 
       <SimpleGrid columns={{ base: 1, md: 2, lg: 5 }} spacing={4} mb={6}>
@@ -670,16 +606,15 @@ const AdminCoursesPage = () => {
           />
         </InputGroup>
         <Select
-          placeholder="All Types"
+          placeholder="All Categories"
           size="sm"
-          value={typeFilter}
-          onChange={handleFilterChange(setTypeFilter)}
+          value={categoryFilter}
+          onChange={handleFilterChange(setCategoryFilter)}
           borderRadius="md"
         >
-          <option value="PERSONAL_DEVELOPMENT">Personal Development</option>
-          <option value="STEM">STEM</option>
-          <option value="ARTS">Arts</option>
-          <option value="LIFE_SKILLS">Life Skills</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
         </Select>
         <Select
           placeholder="All Difficulties"
@@ -751,6 +686,8 @@ const AdminCoursesPage = () => {
         isOpen={courseFormModal.isOpen}
         onClose={courseFormModal.onClose}
         formData={formData}
+        categories={categories}
+        categoriesLoading={categoriesLoading}
         handleFormChange={handleFormChange}
         handleCheckboxChange={handleCheckboxChange}
         handleFileChange={handleFileChange}
@@ -758,7 +695,6 @@ const AdminCoursesPage = () => {
         isLoading={isSubmitting}
         isEditMode={isEditMode}
         thumbnailPreview={thumbnailPreview}
-        coverImagePreview={coverImagePreview}
       />
 
       <DeleteConfirmationModal
@@ -775,6 +711,80 @@ const AdminCoursesPage = () => {
         selectedCourse={selectedCourse}
         handleEditCourse={handleEditCourseClick}
       />
+
+      {/* Manage Categories Modal */}
+      <Modal isOpen={categoryModal.isOpen} onClose={categoryModal.onClose} size="md">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader fontSize="md">Manage Categories</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={5}>
+              {/* Add new */}
+              <Stack spacing={3}>
+                <FormControl>
+                  <FormLabel fontSize="sm">Category name</FormLabel>
+                  <Input
+                    fontSize="sm"
+                    placeholder="e.g. Entrepreneurship"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCreateCategory(); }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="sm">Description <Text as="span" color="gray.400" fontWeight="normal">(optional)</Text></FormLabel>
+                  <Input
+                    fontSize="sm"
+                    placeholder="Short description"
+                    value={newCategoryDesc}
+                    onChange={(e) => setNewCategoryDesc(e.target.value)}
+                  />
+                </FormControl>
+                <Button
+                  leftIcon={<FiPlus />}
+                  colorScheme="blue"
+                  size="sm"
+                  isDisabled={!newCategoryName.trim()}
+                  isLoading={isCreatingCategory}
+                  onClick={handleCreateCategory}
+                >
+                  Add Category
+                </Button>
+              </Stack>
+
+              <Divider />
+
+              {/* Existing categories */}
+              <Box>
+                <Text fontSize="sm" fontWeight="semibold" color="gray.500" mb={3}>
+                  Existing categories ({categories.length})
+                </Text>
+                {categories.length === 0 ? (
+                  <Text fontSize="sm" color="gray.400">None yet.</Text>
+                ) : (
+                  <Wrap spacing={2}>
+                    {categories.map((cat) => (
+                      <WrapItem key={cat.id}>
+                        <Tag size="md" borderRadius="full" variant="subtle" colorScheme="blue">
+                          <TagLabel>{cat.name}</TagLabel>
+                          <TagCloseButton
+                            isDisabled={deletingCategoryId === cat.id}
+                            onClick={() => handleDeleteCategory(cat)}
+                          />
+                        </Tag>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                )}
+              </Box>
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <Button size="sm" variant="ghost" onClick={categoryModal.onClose}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Container>
   );
 };

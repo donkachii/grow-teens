@@ -1,27 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
-import {
-  Box,
-  Heading,
-  FormControl,
-  FormLabel,
-  Input,
-  Button,
-  Text,
-  VStack,
-  Center,
-} from "@chakra-ui/react";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
-import requestClient from "@/lib/requestClient";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+
+import { Button } from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 import { NextAuthUserSession } from "@/types";
+import requestClient from "@/lib/requestClient";
 import { handleServerErrorMessage } from "@/utils";
 
 export default function ResendVerification() {
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get("email") ?? "";
+  const justRegistered = searchParams.get("registered") === "true";
+
+  const [email, setEmail] = useState(prefilledEmail);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
@@ -54,59 +50,62 @@ export default function ResendVerification() {
       toast.error(
         handleServerErrorMessage(error) ||
           "An error occurred while sending the verification email."
-      )
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Center minH="100vh" bg="gray.50">
-      <Box
-        bg="white"
-        p={8}
-        borderRadius="lg"
-        boxShadow="lg"
-        maxW="500px"
-        w="90%"
-      >
-        <VStack spacing={4} align="stretch">
-          <Heading size="lg" textAlign="center">
-            Resend Verification Email
-          </Heading>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-[500px] rounded-2xl bg-white p-8 shadow-lg">
+        <div className="space-y-4">
+          <h1 className="text-center text-2xl font-semibold text-gray-900">
+            {justRegistered ? "Check Your Email" : "Resend Verification Email"}
+          </h1>
 
-          <Text color="gray.600">
-            If your verification link has expired, enter your email below to
-            receive a new one.
-          </Text>
+          {justRegistered && (
+            <div className="rounded-xl border border-success-200 bg-success-50 px-4 py-3 text-sm text-success-700">
+              Registration successful! A verification link has been sent to{" "}
+              <strong>{prefilledEmail}</strong>. Please check your inbox.
+            </div>
+          )}
 
-          <form onSubmit={handleResend}>
-            <FormControl mt={4}>
-              <FormLabel>Email Address</FormLabel>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-              />
-            </FormControl>
+          <p className="text-gray-600">
+            {justRegistered
+              ? "Didn't receive the email? Click below to resend it."
+              : "If your verification link has expired, enter your email below to receive a new one."}
+          </p>
 
-            <Button
-              colorScheme="primary"
-              type="submit"
-              width="full"
-              mt={6}
-              isLoading={isLoading}
+          <form onSubmit={handleResend} className="pt-2">
+            <label
+              htmlFor="resend-email"
+              className="mb-2 block text-sm font-medium text-gray-800"
             >
-              Send Verification Email
+              Email Address
+            </label>
+            <Input
+              id="resend-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+            />
+
+            <Button type="submit" fullWidth className="mt-6" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Send Verification Email"}
             </Button>
           </form>
 
-          <Button variant="ghost" onClick={() => router.push("/auth/signin")} mt={2}>
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => router.push("/auth/signin")}
+          >
             Back to Login
           </Button>
-        </VStack>
-      </Box>
-    </Center>
+        </div>
+      </div>
+    </div>
   );
 }

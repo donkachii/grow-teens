@@ -1,32 +1,13 @@
-/* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Box,
-  HStack,
-  IconButton,
-  Button,
-  Link,
-  Image,
-  Container,
-  Collapse,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverBody,
-  PopoverArrow,
-  useDisclosure,
-  Stack,
-} from "@chakra-ui/react";
-
-import { RxHamburgerMenu, RxChevronDown } from "react-icons/rx";
-import logo from "../../../../public/assets/images/logo.svg";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { RxChevronDown, RxHamburgerMenu } from "react-icons/rx";
+import { Button } from "@/components/ui/Button";
+
+import logo from "../../../../public/assets/images/logo.svg";
 
 interface NavLink {
   name: string;
@@ -57,248 +38,223 @@ const navLinks: NavLink[] = [
   },
 ];
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const { isOpen, onToggle } = useDisclosure();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(
+    null
+  );
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const router = useRouter();
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      setOpenMobileDropdown(null);
+    }
+  }, [isMobileMenuOpen]);
+
+  const desktopTextColor = isScrolled ? "text-gray-800" : "text-white";
 
   return (
-    <Box
-      position="fixed"
-      top="0"
-      left="0"
-      right="0"
-      bg={isScrolled ? "white" : "transparent"}
-      backdropFilter={isScrolled ? "blur(10px)" : "none"}
-      zIndex="50"
-      boxShadow={isScrolled ? "md" : "none"}
-      transition="all 0.3s"
-      width="100%"
+    <header
+      className={cx(
+        "fixed inset-x-0 top-0 z-50 w-full transition-all duration-300",
+        isScrolled
+          ? "bg-white/95 shadow-md backdrop-blur-md"
+          : "bg-transparent"
+      )}
     >
-      <Container maxW="container.xl" py={2}>
-        {/* Desktop View */}
-        <Box
-          className="flex justify-between items-center"
-          py={2}
-          px={{ base: 4, md: 6, lg: 8 }}
-          display={{ base: "none", md: "flex" }}
-        >
-          {/* Logo */}
-          <HStack className="h-16">
-            <a href="/">
-              <Image
-                src={logo.src}
-                alt="GrowTeens Logo"
-                maxH="40px"
-                width="auto"
-              />
-            </a>
-          </HStack>
+      <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+        <div className="hidden h-20 items-center justify-between md:flex">
+          <Link href="/" className="flex h-16 items-center">
+            <Image
+              src={logo}
+              alt="GrowTeens Logo"
+              className="h-10 w-auto"
+              priority
+            />
+          </Link>
 
-          {/* Navigation */}
-          <HStack
-            spacing={{ md: 4, lg: 8 }}
-            color={isScrolled ? "yellow.500" : "white"}
-            fontSize={{ md: "sm", lg: "md" }}
-            fontWeight="bold"
-            alignItems="center"
-            flex="1"
-            justifyContent="center"
-          >
+          <nav className="flex flex-1 items-center justify-center gap-4 lg:gap-8">
             {navLinks.map((link) => (
-              <Box key={link.name}>
+              <div key={link.name} className="group relative">
                 {link.children ? (
-                  <Popover trigger="hover" placement="bottom-start">
-                    <PopoverTrigger>
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        cursor="pointer"
-                        px={2}
-                      >
-                        {link.name}
-                        <Box ml={1} as="span">
-                          <RxChevronDown />
-                        </Box>
-                      </Box>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      border={0}
-                      boxShadow="xl"
-                      bg="white"
-                      p={4}
-                      rounded="md"
-                      minW="200px"
+                  <>
+                    <button
+                      type="button"
+                      className={cx(
+                        "flex items-center gap-1 px-2 text-sm font-bold transition-colors lg:text-base",
+                        desktopTextColor
+                      )}
                     >
-                      <PopoverArrow />
-                      <PopoverBody p={0}>
-                        <Stack>
-                          {link.children.map((child) => (
-                            <Link
-                              key={child.name}
-                              href={child.href}
-                              px={3}
-                              py={2}
-                              borderRadius="md"
-                              color="gray.800"
-                            >
-                              {child.name}
-                            </Link>
-                          ))}
-                        </Stack>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
+                      <span>{link.name}</span>
+                      <RxChevronDown className="transition-transform duration-200 group-hover:rotate-180" />
+                    </button>
+                    <div className="pointer-events-none absolute left-0 top-full pt-4 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+                      <div className="min-w-[220px] rounded-xl border border-gray-100 bg-white p-2 shadow-xl">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.name}
+                            href={child.href}
+                            className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-primary-100 hover:text-primary-500"
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <Link
                     href={link.href}
-                    px={2}
-                    _hover={{
-                      textDecoration: "none",
-                    }}
+                    className={cx(
+                      "px-2 text-sm font-bold transition-colors hover:text-primary-300 lg:text-base",
+                      desktopTextColor
+                    )}
                   >
                     {link.name}
                   </Link>
                 )}
-              </Box>
+              </div>
             ))}
-          </HStack>
+          </nav>
 
-          <HStack spacing={4}>
+          <div className="flex items-center gap-4">
             <Button
-              variant={"outline"}
               onClick={() => router.push("/auth/signin")}
-              size={{ md: "sm", lg: "md" }}
-              _hover={{
-                bg: isScrolled ? "whiteAlpha.200" : "whiteAlpha.200",
-                color: "white",
-              }}
+              variant="outline"
+              size="sm"
+              className={cx(
+                "lg:px-5 lg:py-2.5 lg:text-base",
+                isScrolled
+                  ? "border-gray-300 text-gray-800 hover:bg-gray-100"
+                  : "border-white text-white hover:bg-white/15 hover:text-white"
+              )}
             >
               Sign in
             </Button>
             <Button
-              colorScheme="yellow"
               onClick={() => router.push("/auth/signup")}
-              size={{ md: "sm", lg: "md" }}
+              variant="primary"
+              size="sm"
+              className="lg:px-5 lg:py-2.5 lg:text-base"
             >
               Join now
             </Button>
-          </HStack>
-        </Box>
+          </div>
+        </div>
 
-        {/* Mobile View */}
-        <Box
-          className="flex justify-between items-center h-16"
-          px={{ base: 4, sm: 6, lg: 8 }}
-          display={{ base: "flex", md: "none" }}
-        >
-          {/* Logo */}
-          <HStack>
-            <a href="/">
-              <Image
-                src={logo.src}
-                alt="GrowTeens Logo"
-                maxH="40px"
-                width="auto"
-              />
-            </a>
-          </HStack>
+        <div className="flex h-16 items-center justify-between md:hidden">
+          <Link href="/" className="flex items-center">
+            <Image src={logo} alt="GrowTeens Logo" className="h-10 w-auto" priority />
+          </Link>
 
-          {/* Mobile Menu Button */}
-          <IconButton
-            aria-label="Toggle Menu"
-            icon={<RxHamburgerMenu />}
-            variant="ghost"
-            onClick={onToggle}
-            color="white"
-            _hover={{ bg: "whiteAlpha.200" }}
-          />
-        </Box>
-      </Container>
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className={cx(
+              "rounded-md p-2 transition-colors",
+              isScrolled
+                ? "text-gray-800 hover:bg-gray-100"
+                : "text-white hover:bg-white/15"
+            )}
+          >
+            <RxHamburgerMenu className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
 
-      {/* Mobile Menu Dropdown */}
-      <Collapse in={isOpen} animateOpacity>
-        <Box pb={4} display={{ md: "none" }} bg="white" boxShadow="lg">
-          <Stack spacing={4} px={4} py={2}>
+      {isMobileMenuOpen && (
+        <div className="border-t border-gray-100 bg-white shadow-lg md:hidden">
+          <nav className="space-y-2 px-4 py-4">
             {navLinks.map((link) => (
-              <Box key={link.name}>
+              <div key={link.name}>
                 {link.children ? (
-                  <Menu>
-                    <MenuButton
-                      py={2}
-                      w="full"
-                      textAlign="left"
-                      fontWeight="medium"
-                      color="gray.800"
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenMobileDropdown((prev) =>
+                          prev === link.name ? null : link.name
+                        )
+                      }
+                      className="flex w-full items-center justify-between py-2 text-left text-base font-medium text-gray-800"
                     >
-                      {link.name}
-                      <Box ml={1} as="span" float="right">
-                        <RxChevronDown />
-                      </Box>
-                    </MenuButton>
-                    <MenuList>
-                      {link.children.map((child) => (
-                        <MenuItem
-                          key={child.name}
-                          as={Link}
-                          href={child.href}
-                          _hover={{
-                            bg: "primary.50",
-                            color: "primary.500",
-                          }}
-                        >
-                          {child.name}
-                        </MenuItem>
-                      ))}
-                    </MenuList>
-                  </Menu>
+                      <span>{link.name}</span>
+                      <RxChevronDown
+                        className={cx(
+                          "transition-transform duration-200",
+                          openMobileDropdown === link.name && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {openMobileDropdown === link.name && (
+                      <div className="mt-2 space-y-1 rounded-xl bg-gray-50 p-2">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.name}
+                            href={child.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-primary-100 hover:text-primary-500"
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Link
                     href={link.href}
-                    fontWeight="medium"
-                    color="gray.800"
-                    _hover={{
-                      color: "primary.500",
-                    }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block py-2 text-base font-medium text-gray-800 transition-colors hover:text-primary-500"
                   >
                     {link.name}
                   </Link>
                 )}
-              </Box>
+              </div>
             ))}
-            <Box pt={2}>
+
+            <div className="space-y-3 pt-3">
               <Button
-                colorScheme="primary"
-                width="full"
-                mb={2}
-                onClick={() => router.push("/auth/signup")}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push("/auth/signup");
+                }}
+                fullWidth
               >
                 Join now
               </Button>
               <Button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push("/auth/signin");
+                }}
                 variant="outline"
-                colorScheme="primary"
-                width="full"
-                onClick={() => router.push("/auth/signin")}
+                fullWidth
               >
                 Sign in
               </Button>
-            </Box>
-          </Stack>
-        </Box>
-      </Collapse>
-    </Box>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

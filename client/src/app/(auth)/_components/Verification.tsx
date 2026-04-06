@@ -1,35 +1,64 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import {
-  Box,
-  Heading,
-  Text,
-  Button,
-  Icon,
-  VStack,
-  Container,
-  Card,
-  CardBody,
-  Flex,
-  useColorModeValue,
-  Spinner,
-} from "@chakra-ui/react";
-import { FiCheck, FiX, FiAlertTriangle } from "react-icons/fi";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FiAlertTriangle, FiCheck, FiX } from "react-icons/fi";
+
+import { Button } from "@/components/ui/Button";
 import requestClient from "@/lib/requestClient";
 
+type VerificationStatus =
+  | "loading"
+  | "success"
+  | "expired"
+  | "invalid"
+  | "error";
+
+const statusConfig = {
+  success: {
+    title: "Email Verified!",
+    description:
+      "You can now log in to your account and continue your GrowTeens journey.",
+    icon: FiCheck,
+    iconClasses: "bg-success-100 text-success-600",
+    buttonLabel: "Log In",
+    buttonAction: "/auth/signin",
+  },
+  expired: {
+    title: "Link Expired",
+    description:
+      "Your verification link has expired. Verification links are valid for 10 minutes.",
+    icon: FiAlertTriangle,
+    iconClasses: "bg-warning-100 text-warning-600",
+    buttonLabel: "Request New Link",
+    buttonAction: "/auth/resend-verification",
+  },
+  invalid: {
+    title: "Verification Failed",
+    description:
+      "There was a problem verifying your email. Please try again or contact support.",
+    icon: FiX,
+    iconClasses: "bg-error-100 text-error-600",
+    buttonLabel: "Try Again",
+    buttonAction: "/auth/resend-verification",
+  },
+  error: {
+    title: "Verification Failed",
+    description:
+      "There was a problem verifying your email. Please try again or contact support.",
+    icon: FiX,
+    iconClasses: "bg-error-100 text-error-600",
+    buttonLabel: "Try Again",
+    buttonAction: "/auth/resend-verification",
+  },
+} as const;
+
 export default function Verification() {
-  const [status, setStatus] = useState<
-    "loading" | "success" | "expired" | "invalid" | "error"
-  >("loading");
-  const [email, setEmail] = useState<string>("");
+  const [status, setStatus] = useState<VerificationStatus>("loading");
+  const [email, setEmail] = useState("");
   const searchParams = useSearchParams();
   const router = useRouter();
-  const bgColor = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   const token = searchParams?.get("token");
 
@@ -41,16 +70,13 @@ export default function Verification() {
 
     try {
       const response = await requestClient().get(`/auth/verify-email/${token}`);
-
-      console.log("response", response);
-      setStatus(response?.data?.status);
+      setStatus(response?.data?.status ?? "error");
       if (response?.data?.email) {
-        setEmail(response?.data?.email);
+        setEmail(response.data.email);
       }
     } catch (error: any) {
       if (error.response?.data?.status) {
         setStatus(error.response.data.status);
-        console.log("error response", error, error.response.data.status);
       } else {
         setStatus("error");
       }
@@ -64,134 +90,66 @@ export default function Verification() {
     }
 
     verify();
-  }, [token, verify, status]);
+  }, [token, verify]);
 
   if (status === "loading") {
     return (
-      <Container maxW="container.sm" py={10}>
-        <Card
-          bg={bgColor}
-          borderWidth="1px"
-          borderColor={borderColor}
-          borderRadius="lg"
-          overflow="hidden"
-          boxShadow="md"
-        >
-          <CardBody p={8}>
-            <VStack spacing={6} align="center">
-              <Spinner size="xl" color="primary.500" thickness="4px" />
-              <Heading size="lg" textAlign="center">
-                Verifying your email...
-              </Heading>
-            </VStack>
-          </CardBody>
-        </Card>
-      </Container>
+      <div className="mx-auto max-w-md px-4 py-10">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 shadow-md">
+          <div className="flex flex-col items-center gap-6 text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-100 border-t-primary" />
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Verifying your email...
+            </h1>
+          </div>
+        </div>
+      </div>
     );
   }
 
+  const currentStatus = statusConfig[status];
+  const StatusIcon = currentStatus.icon;
+
   return (
-    <Container maxW="container.sm" py={10}>
-      <Card
-        bg={bgColor}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="lg"
-        overflow="hidden"
-        boxShadow="md"
-      >
-        <CardBody p={8}>
-          <VStack spacing={6} align="center">
-            {status === "success" && (
-              <>
-                <Box borderRadius="full" bg="green.100" p={3} color="green.500">
-                  <Icon as={FiCheck} boxSize={8} />
-                </Box>
-                <Heading size="lg" textAlign="center">
-                  Email Verified!
-                </Heading>
-                <Text fontSize="md" color="gray.600" textAlign="center">
-                  Your email {email} has been successfully verified. You can now
-                  log in to your account.
-                </Text>
-                <Button
-                  colorScheme="primary"
-                  size="lg"
-                  width="full"
-                  mt={4}
-                  onClick={() => router.push("/auth/signin")}
-                >
-                  Log In
-                </Button>
-              </>
-            )}
+    <div className="mx-auto max-w-md px-4 py-10">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 shadow-md">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div
+            className={`flex h-16 w-16 items-center justify-center rounded-full ${currentStatus.iconClasses}`}
+          >
+            <StatusIcon className="h-8 w-8" />
+          </div>
 
-            {status === "expired" && (
-              <>
-                <Box
-                  borderRadius="full"
-                  bg="orange.100"
-                  p={3}
-                  color="orange.500"
-                >
-                  <Icon as={FiAlertTriangle} boxSize={8} />
-                </Box>
-                <Heading size="lg" textAlign="center">
-                  Link Expired
-                </Heading>
-                <Text fontSize="md" color="gray.600" textAlign="center">
-                  Your verification link has expired. Verification links are
-                  valid for 10 minutes.
-                </Text>
-                <Button
-                  colorScheme="primary"
-                  size="lg"
-                  width="full"
-                  mt={4}
-                  onClick={() => router.push("/auth/resend-verification")}
-                >
-                  Request New Link
-                </Button>
-              </>
-            )}
+          <div className="space-y-3">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {currentStatus.title}
+            </h1>
+            <p className="text-base leading-7 text-gray-600">
+              {status === "success" && email
+                ? `Your email ${email} has been successfully verified.`
+                : currentStatus.description}
+            </p>
+          </div>
 
-            {(status === "error" || status === "invalid") && (
-              <>
-                <Box borderRadius="full" bg="red.100" p={3} color="red.500">
-                  <Icon as={FiX} boxSize={8} />
-                </Box>
-                <Heading size="lg" textAlign="center">
-                  Verification Failed
-                </Heading>
-                <Text fontSize="md" color="gray.600" textAlign="center">
-                  There was a problem verifying your email. Please try again or
-                  contact support.
-                </Text>
-                <Button
-                  colorScheme="primary"
-                  size="lg"
-                  width="full"
-                  mt={4}
-                  onClick={() => router.push("/auth/resend-verification")}
-                >
-                  Try Again
-                </Button>
-              </>
-            )}
+          <Button
+            size="lg"
+            fullWidth
+            onClick={() => router.push(currentStatus.buttonAction)}
+          >
+            {currentStatus.buttonLabel}
+          </Button>
 
-            <Flex mt={4}>
-              <Text fontSize="sm" color="gray.500">
-                Need help?{" "}
-                <Link href="/contact" passHref>
-                  <Text as="span" color="primary.500">
-                    Contact support
-                  </Text>
-                </Link>
-              </Text>
-            </Flex>
-          </VStack>
-        </CardBody>
-      </Card>
-    </Container>
+          <p className="text-sm text-gray-500">
+            Need help?{" "}
+            <Link
+              href="/contact"
+              className="font-medium text-primary transition-colors hover:text-primary-600"
+            >
+              Contact support
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

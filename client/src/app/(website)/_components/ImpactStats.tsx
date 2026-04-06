@@ -1,24 +1,6 @@
 "use client";
-
-import React, { useRef } from "react";
-import {
-  chakra,
-  Box,
-  Flex,
-  Grid,
-  Heading,
-  Text,
-  shouldForwardProp,
-} from "@chakra-ui/react";
-import { motion, isValidMotionProp } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+  
 import CountUp from "react-countup";
-
-// Create a MotionBox that forwards both motion and Chakra props
-const MotionBox = chakra(motion.div, {
-  shouldForwardProp: (prop) =>
-    isValidMotionProp(prop) || shouldForwardProp(prop),
-});
 
 interface StatProps {
   value: number;
@@ -28,28 +10,13 @@ interface StatProps {
 }
 
 const StatCounter = ({ value, label, suffix = "+", delay }: StatProps) => {
-  const countUpRef = useRef(null);
-  const { ref, inView } = useInView({
-    threshold: 0.3,
-    triggerOnce: true,
-  });
-
   return (
-    <MotionBox
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      //   transition={{ duration: 0.6, delay }}
-      viewport={{ once: true }}
+    <div
+      className="text-center"
     >
-      <Heading
-        as="h2"
-        fontSize={{ base: "4xl", md: "5xl", lg: "6xl" }}
-        color="primary.500"
-        mb={2}
-        ref={countUpRef}
+      <h3
+        className="mb-2 text-5xl font-bold tracking-tight text-primary md:text-6xl"
       >
-        {inView ? (
           <CountUp
             start={0}
             end={value}
@@ -57,117 +24,54 @@ const StatCounter = ({ value, label, suffix = "+", delay }: StatProps) => {
             separator=","
             suffix={suffix}
             delay={delay}
-            useEasing={true}
+            useEasing
           />
-        ) : (
-          `0${suffix}`
-        )}
-      </Heading>
-      <Text fontSize={{ base: "md", md: "lg" }} color="gray.600">
-        {label}
-      </Text>
-    </MotionBox>
+      </h3>
+      <p className="text-base text-gray-600 md:text-lg">{label}</p>
+    </div>
   );
 };
 
 const ImpactStats = () => {
   return (
-    <Box
-      as="section"
-      py={{ base: 16, md: 24 }}
-      bg="primary.50"
-      position="relative"
-      overflow="hidden"
-    >
-      {/* Decorative background elements */}
-      <MotionBox
-        position="absolute"
-        top="-100px"
-        right="-100px"
-        w="300px"
-        h="300px"
-        borderRadius="full"
-        bg="primary.100"
-        opacity={0.3}
-        zIndex={0}
-        initial={{ scale: 0.8, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 0.3 }}
-        // transition={{ duration: 1.5 }}
+    <section className="relative overflow-hidden bg-primary-100/60 py-16 md:py-24">
+      <div
+        className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-primary-100 opacity-30"
       />
-      <MotionBox
-        position="absolute"
-        bottom="-50px"
-        left="-80px"
-        w="200px"
-        h="200px"
-        borderRadius="full"
-        bg="secondary.100"
-        opacity={0.3}
-        zIndex={0}
-        initial={{ scale: 0.8, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 0.3 }}
-        // transition={{ duration: 1.5 }}
+      <div
+        className="absolute -bottom-12 -left-16 h-52 w-52 rounded-full bg-secondary-100 opacity-30"
       />
 
-      <Box maxW="container.xl" mx="auto" px="5%" position="relative" zIndex={1}>
-        <Flex
-          direction="column"
-          align="center"
-          textAlign="center"
-          mb={{ base: 10, md: 16 }}
-        >
-          <MotionBox
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            // transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-10 max-w-3xl text-center md:mb-16">
+          <p
+            className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-primary-600"
           >
-            <Text color="primary.600" fontWeight="semibold" mb={3}>
-              Our Impact
-            </Text>
-          </MotionBox>
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            // transition={{ duration: 0.5, delay: 0.2 }}
-            viewport={{ once: true }}
+            Our Impact
+          </p>
+          <h2
+            className="mb-4 text-3xl font-bold leading-tight text-gray-900 md:text-5xl"
           >
-            <Heading size={{ base: "xl", md: "2xl" }} maxW="3xl" mb={4}>
-              Transforming the lives of African teenagers through education and
-              mentorship
-            </Heading>
-          </MotionBox>
-          <MotionBox
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            // transition={{ duration: 0.5, delay: 0.4 }}
-            viewport={{ once: true }}
-            maxW="3xl"
+            Transforming the lives of African teenagers through education and
+            mentorship
+          </h2>
+          <p
+            className="text-base leading-8 text-gray-600 md:text-lg"
           >
-            <Text fontSize={{ base: "md", md: "lg" }} color="gray.600">
-              Since our founding, we&apos;ve been committed to creating
-              meaningful change in communities across Africa. These numbers
-              represent real lives transformed.
-            </Text>
-          </MotionBox>
-        </Flex>
+            Since our founding, we&apos;ve been committed to creating meaningful
+            change in communities across Africa. These numbers represent real
+            lives transformed.
+          </p>
+        </div>
 
-        <Grid
-          templateColumns={{
-            base: "1fr",
-            md: "repeat(2, 1fr)",
-            lg: "repeat(4, 1fr)",
-          }}
-          gap={{ base: 10, md: 6, lg: 8 }}
-          textAlign="center"
-        >
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <StatCounter value={5000} label="Students Trained" delay={0.1} />
           <StatCounter value={120} label="Communities Reached" delay={0.2} />
           <StatCounter value={85} label="Partner Organizations" delay={0.3} />
           <StatCounter value={95} label="Success Rate" suffix="%" delay={0.4} />
-        </Grid>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </section>
   );
 };
 

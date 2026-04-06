@@ -1,15 +1,10 @@
 "use client";
 
-import { Box, Button, Flex, Grid, Heading, Image, Text } from "@chakra-ui/react";
-import { motion } from "framer-motion";
-import React from "react";
-import { RxChevronRight } from "react-icons/rx";
 import { useRouter } from "next/navigation";
+import { RxChevronRight } from "react-icons/rx";
 
-const MotionBox = motion(Box);
-const MotionFlex = motion(Flex);
+import { Button } from "@/components/ui/Button";
 
-// Replace these with actual partner logos
 const partners = [
   { id: 1, name: "Microsoft", logo: "https://via.placeholder.com/150x80?text=Microsoft" },
   { id: 2, name: "Google", logo: "https://via.placeholder.com/150x80?text=Google" },
@@ -21,135 +16,75 @@ const partners = [
 
 const Partners = () => {
   const router = useRouter();
-  
+
   return (
-    <Box
-      as="section"
-      py={{ base: 16, md: 20 }}
-      bg="gray.50"
-      px="5%"
-    >
-      <Box maxW="container.xl" mx="auto">
-        <MotionFlex
-          direction={{ base: "column", md: "row" }}
-          justify="space-between"
-          align={{ base: "flex-start", md: "flex-end" }}
-          mb={{ base: 12, md: 16 }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
+    <section className="bg-gray-50 py-16 md:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div
+          className="mb-12 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end"
         >
-          <Box maxW={{ md: "60%" }}>
-            <Text 
-              color="primary.600" 
-              fontWeight="semibold" 
-              mb={3}
-            >
+          <div className="max-w-3xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-primary-600">
               Our Network
-            </Text>
-            <Heading 
-              size={{ base: "xl", md: "2xl" }}
-              mb={4}
-            >
+            </p>
+            <h2 className="mb-4 text-3xl font-bold leading-tight text-gray-900 md:text-5xl">
               Partnering with global leaders to empower Africa&apos;s youth
-            </Heading>
-            <Text fontSize={{ base: "md", md: "lg" }} color="gray.600">
-              We collaborate with organizations that share our vision of creating
-              opportunities for African teenagers and building a brighter future.
-            </Text>
-          </Box>
-        </MotionFlex>
-        
-        <Grid 
-          templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" }}
-          gap={8}
-          mb={{ base: 12, md: 16 }}
-          alignItems="center"
-        >
-          {partners.map((partner, index) => (
-            <MotionBox
+            </h2>
+            <p className="text-base leading-8 text-gray-600 md:text-lg">
+              We collaborate with organizations that share our vision of
+              creating opportunities for African teenagers and building a
+              brighter future.
+            </p>
+          </div>
+        </div>
+
+        {/* <div className="mb-12 grid grid-cols-2 gap-8 md:mb-16 md:grid-cols-3 lg:grid-cols-6">
+          {partners.map((partner) => (
+            <div
               key={partner.id}
-              bg="white"
-              py={6}
-              px={4}
-              borderRadius="md"
-              boxShadow="sm"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              height="100px"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ 
-                y: -5,
-                boxShadow: "md",
-                transition: { duration: 0.2 }
-              }}
+              className="flex h-[100px] items-center justify-center rounded-xl bg-white px-4 py-6 shadow-sm transition-shadow hover:shadow-md"
             >
-              <Image 
-                src={partner.logo} 
-                alt={partner.name} 
-                maxW="90%" 
-                maxH="80%" 
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="max-h-[80%] max-w-[90%] object-contain"
               />
-            </MotionBox>
+            </div>
           ))}
-        </Grid>
-        
-        <MotionBox
-          bg="primary.50"
-          borderRadius="xl"
-          p={{ base: 6, md: 10 }}
-          boxShadow="md"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          viewport={{ once: true }}
+        </div> */}
+
+        <div
+          className="rounded-2xl bg-primary-100/70 p-6 shadow-md md:p-10"
         >
-          <Flex 
-            direction={{ base: "column", md: "row" }}
-            align={{ base: "flex-start", md: "center" }}
-            justify="space-between"
-          >
-            <Box mb={{ base: 6, md: 0 }} maxW={{ md: "60%" }}>
-              <Heading 
-                as="h3" 
-                size={{ base: "lg", md: "xl" }}
-                mb={3}
-              >
+          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+            <div className="max-w-3xl">
+              <h3 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
                 Become a partner or sponsor
-              </Heading>
-              <Text color="gray.600">
-                Join our mission to empower Africa&apos;s future leaders. Together, we can create
-                meaningful impact and sustainable change across the continent.
-              </Text>
-            </Box>
-            
-            <Flex gap={4} flexWrap={{ base: "wrap", md: "nowrap" }}>
-              <Button 
-                colorScheme="primary"
-                size="lg"
-                onClick={() => router.push("/sponsor")}
-              >
+              </h3>
+              <p className="leading-7 text-gray-600">
+                Join our mission to empower Africa&apos;s future leaders.
+                Together, we can create meaningful impact and sustainable change
+                across the continent.
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col gap-4 sm:flex-row md:w-auto">
+              <Button size="lg" onClick={() => router.push("/sponsor")}>
                 Become a Sponsor
               </Button>
-              <Button 
+              <Button
                 variant="outline"
-                colorScheme="primary"
                 size="lg"
-                rightIcon={<RxChevronRight />}
                 onClick={() => router.push("/partners")}
               >
                 Learn More
+                <RxChevronRight className="h-5 w-5" />
               </Button>
-            </Flex>
-          </Flex>
-        </MotionBox>
-      </Box>
-    </Box>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
