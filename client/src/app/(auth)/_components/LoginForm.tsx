@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { FiEyeOff } from "react-icons/fi";
 import { IoEyeOutline } from "react-icons/io5";
@@ -39,11 +39,16 @@ export default function LoginForm() {
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     setIsLoading(true);
 
+    const ROLE_ROUTES: Record<string, string> = {
+      TEEN: "/dashboard",
+      SPONSOR: "/sponsors",
+      MENTOR: "/mentors",
+      ADMIN: "/admin",
+    };
+
     const response = await signIn("credentials", {
       email: data.email,
       password: data.password,
-      callbackUrl:
-        searchParams.get("callbackUrl") || `${window.location.origin}/`,
       redirect: false,
     });
 
@@ -67,8 +72,16 @@ export default function LoginForm() {
       return;
     }
 
-    if (response.ok && response.url) {
-      window.location.href = response.url;
+    if (response.ok) {
+      const callbackUrl = searchParams.get("callbackUrl");
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+        return;
+      }
+      const session = await getSession();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const role = (session?.user as any)?.role as string | undefined;
+      window.location.href = (role && ROLE_ROUTES[role]) || "/";
       return;
     }
 

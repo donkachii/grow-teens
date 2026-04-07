@@ -44,12 +44,16 @@ export const getOrCreateSession = async (req: Request, res: Response) => {
 export const saveMessages = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { 
-      sessionId, 
-      userMessage, 
-      assistantMessage, 
+    const {
+      sessionId,
+      userMessage,
+      assistantMessage,
       aiModel
     } = req.body;
+
+    if (!sessionId || !userMessage?.trim() || !assistantMessage?.trim()) {
+      return res.status(400).json({ message: "sessionId, userMessage, and assistantMessage are required" });
+    }
 
     // Verify session ownership
     const session = await prisma.chatbotSession.findUnique({
