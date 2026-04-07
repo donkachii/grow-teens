@@ -2,45 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  Text,
-  Card,
-  CardHeader,
-  CardBody,
-  HStack,
-  Avatar,
-  Badge,
-  IconButton,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Select,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  useColorModeValue,
-  Spinner,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
-} from "@chakra-ui/react";
-
 import { toast } from "react-toastify";
-
 import {
   FiSearch,
   FiSettings,
@@ -51,11 +13,11 @@ import {
   FiUserCheck,
   FiRefreshCw,
 } from "react-icons/fi";
-
 import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
 import { NextAuthUserSession } from "@/types";
 import { handleServerErrorMessage } from "@/utils";
+import { Modal } from "@/components/ui/Overlay";
 
 interface UserPagination {
   total: number;
@@ -85,6 +47,16 @@ interface UserResponse {
   pagination: UserPagination;
 }
 
+const inputClassName =
+  "w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+
+const badgeClassByRole: Record<string, string> = {
+  TEEN: "bg-blue-100 text-blue-700",
+  MENTOR: "bg-violet-100 text-violet-700",
+  SPONSORS: "bg-emerald-100 text-emerald-700",
+  ADMIN: "bg-slate-200 text-slate-700",
+};
+
 const UsersPage = () => {
   const { data: sessionData } = useSession() as {
     data: NextAuthUserSession | null;
@@ -105,12 +77,9 @@ const UsersPage = () => {
     hasPrevious: false,
   });
 
-  const cardBg = useColorModeValue("white", "gray.800");
-
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ServerUser | null>(null);
   const [newStatus, setNewStatus] = useState<"active" | "pending">("active");
-  const cancelRef = React.useRef<HTMLButtonElement>(null);
 
   const fetchUsers = useCallback(
     async (page = 1) => {
@@ -180,7 +149,6 @@ const UsersPage = () => {
         );
 
         toast.success(`User role has been updated to ${role}`);
-
         fetchUsers(pagination.page);
       } catch (err) {
         toast.error(handleServerErrorMessage(err));
@@ -201,392 +169,314 @@ const UsersPage = () => {
     }
   }, [sessionData, fetchUsers, searchQuery, roleFilter, statusFilter]);
 
-  const handlePageChange = (newPage: number) => {
-    fetchUsers(newPage);
-  };
-
-  //TODO: Handle search with debounce
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+  const paginationPages = Array.from(
+    { length: Math.min(5, pagination.totalPages) },
+    (_, i) => {
+      if (pagination.totalPages <= 5) return i + 1;
+      if (pagination.page <= 3) return i + 1;
+      if (pagination.page >= pagination.totalPages - 2) {
+        return pagination.totalPages - 4 + i;
+      }
+      return pagination.page - 2 + i;
+    }
+  );
 
   return (
-    <Box p={6}>
-      <AlertDialog
+    <div className="px-6 py-8">
+      <Modal
         isOpen={isStatusDialogOpen}
         onClose={() => setIsStatusDialogOpen(false)}
-        leastDestructiveRef={cancelRef}
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {newStatus === "active" ? "Activate" : "Deactivate"} User
-            </AlertDialogHeader>
-
-            <AlertDialogBody>
-              Are you sure you want to{" "}
-              {newStatus === "active" ? "activate" : "deactivate"}{" "}
-              {selectedUser?.fullName}?
-              {newStatus === "active"
-                ? " This will allow them to access the platform."
-                : " This will prevent them from accessing the platform."}
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button
-                ref={cancelRef}
-                onClick={() => setIsStatusDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme={newStatus === "active" ? "green" : "red"}
-                onClick={handleUpdateUserStatus}
-                ml={3}
-              >
-                Confirm
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
-
-      <Card p={4} boxShadow="md" borderRadius="lg" bg={cardBg} mb={8}>
-        <CardHeader pb={2}>
-          <Flex
-            justify="space-between"
-            align="center"
-            direction={{ base: "column", md: "row" }}
-            gap={{ base: 3, md: 0 }}
-          >
-            <Heading size="md">User Management</Heading>
-            <Flex gap={2} flexWrap={{ base: "wrap", md: "nowrap" }}>
-              <InputGroup size="sm" maxW="200px">
-                <InputLeftElement pointerEvents="none">
-                  <FiSearch color="gray.300" />
-                </InputLeftElement>
-                <Input
-                  placeholder="Search users"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-              </InputGroup>
-
-              <Select
-                size="sm"
-                placeholder="Filter by role"
-                maxW="150px"
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              >
-                <option value="">All Roles</option>
-                <option value="TEEN">Teens</option>
-                <option value="MENTOR">Mentors</option>
-                <option value="SPONSORS">Sponsors</option>
-                <option value="ADMIN">Admins</option>
-              </Select>
-
-              <Select
-                size="sm"
-                placeholder="Filter by status"
-                maxW="150px"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-              </Select>
-
-              <IconButton
-                aria-label="Refresh data"
-                icon={<FiRefreshCw />}
-                size="sm"
-                onClick={() => fetchUsers(pagination.page)}
-                isLoading={isLoading}
-              />
-
-              {/* Uncomment the following button to enable adding users */}
-              {/* <Button
-                size="sm"
-                colorScheme="blue"
-                leftIcon={<FiPlus />}
-                onClick={() =>
-                  toast.info("Add user functionality coming soon!")
-                }
-              >
-                Add User
-              </Button> */}
-            </Flex>
-          </Flex>
-        </CardHeader>
-        <CardBody>
-          {isLoading ? (
-            <Flex justify="center" align="center" py={10}>
-              <Spinner size="xl" color="blue.500" />
-            </Flex>
-          ) : error ? (
-            <Flex
-              justify="center"
-              align="center"
-              py={10}
-              direction="column"
-              gap={4}
+        size="sm"
+        title={`${newStatus === "active" ? "Activate" : "Deactivate"} User`}
+        footer={
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsStatusDialogOpen(false)}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              <Text color="red.500">{error}</Text>
-              <Button onClick={() => fetchUsers(1)} leftIcon={<FiRefreshCw />}>
-                Try Again
-              </Button>
-            </Flex>
-          ) : (
-            <>
-              <Table variant="simple">
-                <Thead>
-                  <Tr>
-                    <Th>User</Th>
-                    <Th>Role</Th>
-                    <Th>Status</Th>
-                    <Th>Last Active</Th>
-                    <Th>Actions</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleUpdateUserStatus}
+              className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white transition ${
+                newStatus === "active"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
+            >
+              Confirm
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm leading-6 text-slate-600">
+          Are you sure you want to{" "}
+          {newStatus === "active" ? "activate" : "deactivate"}{" "}
+          <strong className="text-slate-900">{selectedUser?.fullName}</strong>?
+          {newStatus === "active"
+            ? " This will allow them to access the platform."
+            : " This will prevent them from accessing the platform."}
+        </p>
+      </Modal>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-2xl font-semibold text-slate-900">User Management</h1>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative min-w-[200px]">
+              <FiSearch className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                placeholder="Search users"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${inputClassName} pl-11`}
+              />
+            </div>
+
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className={`${inputClassName} min-w-[150px] py-3`}
+            >
+              <option value="">All Roles</option>
+              <option value="TEEN">Teens</option>
+              <option value="MENTOR">Mentors</option>
+              <option value="SPONSORS">Sponsors</option>
+              <option value="ADMIN">Admins</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`${inputClassName} min-w-[150px] py-3`}
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => fetchUsers(pagination.page)}
+              disabled={isLoading}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              <FiRefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            Loading users...
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-4 py-12 text-center">
+            <p className="text-sm text-red-600">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchUsers(1)}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              <FiRefreshCw className="h-4 w-4" />
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mt-5 overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-slate-200 text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">User</th>
+                    <th className="px-4 py-3 font-medium">Role</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Last Active</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {users.length > 0 ? (
                     users.map((user) => (
-                      <Tr key={user.id}>
-                        <Td>
-                          <Flex align="center">
-                            <Avatar
-                              size="sm"
-                              name={user.fullName}
-                              src={user.profileImage}
-                              mr={2}
-                              bg={user.isOnline ? "green.500" : "gray.400"}
-                            />
-                            <Box>
-                              <Text fontWeight="medium">{user.fullName}</Text>
-                              <Text fontSize="xs" color="gray.500">
-                                {user.email}
-                              </Text>
-                            </Box>
-                          </Flex>
-                        </Td>
-                        <Td>
-                          <Badge
-                            colorScheme={
-                              user.role === "TEEN"
-                                ? "blue"
-                                : user.role === "MENTOR"
-                                ? "purple"
-                                : user.role === "SPONSORS"
-                                ? "green"
-                                : "gray"
-                            }
+                      <tr key={user.id} className="border-b border-slate-100">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                              {user.profileImage ? (
+                                <img
+                                  src={user.profileImage}
+                                  alt={user.fullName}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                user.fullName
+                                  .split(" ")
+                                  .map((part) => part[0])
+                                  .join("")
+                                  .slice(0, 2)
+                              )}
+                              <span
+                                className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white ${
+                                  user.isOnline ? "bg-emerald-500" : "bg-slate-300"
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900">
+                                {user.fullName}
+                              </p>
+                              <p className="text-xs text-slate-500">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              badgeClassByRole[user.role] || "bg-slate-100 text-slate-700"
+                            }`}
                           >
                             {user.role}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          <Flex align="center">
-                            <Box
-                              w="8px"
-                              h="8px"
-                              borderRadius="full"
-                              bg={user.emailVerified ? "green.500" : "gray.300"}
-                              mr={2}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                user.emailVerified ? "bg-emerald-500" : "bg-slate-300"
+                              }`}
                             />
-                            <Text fontSize="sm">
-                              {user.emailVerified ? "Active" : "Pending"}
-                            </Text>
-                          </Flex>
-                        </Td>
-                        <Td>
-                          <Text fontSize="sm">
-                            {user.lastActiveFormatted || "Never"}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <HStack spacing={1}>
-                            <Menu>
-                              <MenuButton
-                                as={IconButton}
-                                aria-label="Role options"
-                                icon={<FiUserCheck />}
-                                size="sm"
-                                variant="ghost"
-                                colorScheme="purple"
-                              />
-                              <MenuList>
-                                <MenuItem
-                                  isDisabled={user.role === "TEEN"}
-                                  onClick={() =>
-                                    handleUpdateUserRole(user.id, "TEEN")
-                                  }
-                                >
-                                  Set as Teen
-                                </MenuItem>
-                                <MenuItem
-                                  isDisabled={user.role === "MENTOR"}
-                                  onClick={() =>
-                                    handleUpdateUserRole(user.id, "MENTOR")
-                                  }
-                                >
-                                  Set as Mentor
-                                </MenuItem>
-                                <MenuItem
-                                  isDisabled={user.role === "SPONSORS"}
-                                  onClick={() =>
-                                    handleUpdateUserRole(user.id, "SPONSORS")
-                                  }
-                                >
-                                  Set as Sponsor
-                                </MenuItem>
-                                <MenuItem
-                                  isDisabled={user.role === "ADMIN"}
-                                  onClick={() =>
-                                    handleUpdateUserRole(user.id, "ADMIN")
-                                  }
-                                >
-                                  Set as Admin
-                                </MenuItem>
-                              </MenuList>
-                            </Menu>
+                            {user.emailVerified ? "Active" : "Pending"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {user.lastActiveFormatted || "Never"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <details className="relative">
+                              <summary className="flex cursor-pointer list-none items-center justify-center rounded-full p-2 text-violet-600 transition hover:bg-violet-50">
+                                <FiUserCheck className="h-4 w-4" />
+                              </summary>
+                              <div className="absolute right-0 z-10 mt-2 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                                {["TEEN", "MENTOR", "SPONSORS", "ADMIN"].map((role) => (
+                                  <button
+                                    key={role}
+                                    type="button"
+                                    disabled={user.role === role}
+                                    onClick={() => handleUpdateUserRole(user.id, role)}
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Set as {role === "SPONSORS" ? "Sponsor" : role.charAt(0) + role.slice(1).toLowerCase()}
+                                  </button>
+                                ))}
+                              </div>
+                            </details>
 
-                            <IconButton
-                              aria-label="Message user"
-                              icon={<FiMessageCircle />}
-                              size="sm"
-                              variant="ghost"
-                              colorScheme="green"
+                            <button
+                              type="button"
                               onClick={() =>
                                 toast.info(
                                   `Message to ${user.fullName} will be implemented soon!`
                                 )
                               }
-                            />
+                              className="rounded-full p-2 text-emerald-600 transition hover:bg-emerald-50"
+                              title="Message user"
+                            >
+                              <FiMessageCircle className="h-4 w-4" />
+                            </button>
 
-                            <Menu>
-                              <MenuButton
-                                as={IconButton}
-                                aria-label="More options"
-                                icon={<FiMoreVertical />}
-                                size="sm"
-                                variant="ghost"
-                              />
-                              <MenuList>
+                            <details className="relative">
+                              <summary className="flex cursor-pointer list-none items-center justify-center rounded-full p-2 text-slate-600 transition hover:bg-slate-100">
+                                <FiMoreVertical className="h-4 w-4" />
+                              </summary>
+                              <div className="absolute right-0 z-10 mt-2 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
                                 {!user.emailVerified ? (
-                                  <MenuItem
-                                    icon={<FiCheckCircle />}
-                                    onClick={() =>
-                                      openStatusDialog(user, "active")
-                                    }
+                                  <button
+                                    type="button"
+                                    onClick={() => openStatusDialog(user, "active")}
+                                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                                   >
+                                    <FiCheckCircle className="h-4 w-4 text-emerald-600" />
                                     Activate Account
-                                  </MenuItem>
+                                  </button>
                                 ) : (
-                                  <MenuItem
-                                    icon={<FiXCircle />}
-                                    onClick={() =>
-                                      openStatusDialog(user, "pending")
-                                    }
+                                  <button
+                                    type="button"
+                                    onClick={() => openStatusDialog(user, "pending")}
+                                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                                   >
+                                    <FiXCircle className="h-4 w-4 text-red-600" />
                                     Deactivate Account
-                                  </MenuItem>
+                                  </button>
                                 )}
-                                <MenuItem
-                                  icon={<FiSettings />}
-                                  onClick={() =>
-                                    toast.info("User settings coming soon!")
-                                  }
+                                <button
+                                  type="button"
+                                  onClick={() => toast.info("User settings coming soon!")}
+                                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                                 >
+                                  <FiSettings className="h-4 w-4" />
                                   User Settings
-                                </MenuItem>
-                              </MenuList>
-                            </Menu>
-                          </HStack>
-                        </Td>
-                      </Tr>
+                                </button>
+                              </div>
+                            </details>
+                          </div>
+                        </td>
+                      </tr>
                     ))
                   ) : (
-                    <Tr>
-                      <Td colSpan={5} textAlign="center" py={4}>
-                        <Text color="gray.500">
-                          No users found matching your criteria
-                        </Text>
-                      </Td>
-                    </Tr>
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                        No users found matching your criteria
+                      </td>
+                    </tr>
                   )}
-                </Tbody>
-              </Table>
+                </tbody>
+              </table>
+            </div>
 
-              {/* Pagination controls */}
-              <Flex
-                justify="space-between"
-                align="center"
-                mt={4}
-                flexDir={{ base: "column", sm: "row" }}
-                gap={4}
-              >
-                <Text fontSize="sm" color="gray.500">
-                  Showing {users.length} of {pagination.total} users
-                </Text>
-                <HStack>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    isDisabled={!pagination.hasPrevious}
-                    onClick={() => handlePageChange(pagination.page - 1)}
+            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-500">
+                Showing {users.length} of {pagination.total} users
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!pagination.hasPrevious}
+                  onClick={() => fetchUsers(pagination.page - 1)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                {paginationPages.map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => fetchUsers(pageNum)}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                      pagination.page === pageNum
+                        ? "bg-blue-600 text-white"
+                        : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
-                    Previous
-                  </Button>
-
-                  {Array.from(
-                    { length: Math.min(5, pagination.totalPages) },
-                    (_, i) => {
-                      let pageNum;
-                      if (pagination.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (pagination.page <= 3) {
-                        pageNum = i + 1;
-                      } else if (pagination.page >= pagination.totalPages - 2) {
-                        pageNum = pagination.totalPages - 4 + i;
-                      } else {
-                        pageNum = pagination.page - 2 + i;
-                      }
-
-                      return (
-                        <Button
-                          key={pageNum}
-                          size="sm"
-                          variant={
-                            pagination.page === pageNum ? "solid" : "outline"
-                          }
-                          colorScheme={
-                            pagination.page === pageNum ? "blue" : undefined
-                          }
-                          onClick={() => handlePageChange(pageNum)}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    }
-                  )}
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    isDisabled={!pagination.hasNext}
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                  >
-                    Next
-                  </Button>
-                </HStack>
-              </Flex>
-            </>
-          )}
-        </CardBody>
-      </Card>
-    </Box>
+                    {pageNum}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={!pagination.hasNext}
+                  onClick={() => fetchUsers(pagination.page + 1)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
+    </div>
   );
 };
 
