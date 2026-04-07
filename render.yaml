@@ -3,5 +3,5 @@ services:
     name: grow-teens-server
     runtime: node
     rootDir: server
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npx prisma generate
+    startCommand: node --experimental-strip-types src/server.ts
