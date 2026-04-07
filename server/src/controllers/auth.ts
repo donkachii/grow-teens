@@ -41,7 +41,7 @@ const sendVerificationEmail = async (email: string, token: string) => {
       </div>
     `;
 
-  sendEmail(email, "Verify Your GrowTeens Account", "", html);
+  await sendEmail(email, "Verify Your GrowTeens Account", "", html);
 };
 
 export const registerUser = async (req: Request, res: Response) => {

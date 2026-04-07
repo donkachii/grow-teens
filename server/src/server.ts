@@ -11,6 +11,7 @@ import {
   CLOUDINARY_CLOUD_NAME,
   PORT,
 } from "./config/secrets.ts";
+import { verifyEmailTransport } from "./utils/email.ts";
 
 import rootRouter from "./routes/index.ts";
 
@@ -37,6 +38,10 @@ cloudinary.config({
 });
 
 connectToDB();
+
+verifyEmailTransport().catch((error) => {
+  console.error("Email SMTP verification failed:", error);
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
