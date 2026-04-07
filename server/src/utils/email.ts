@@ -1,14 +1,27 @@
 import nodemailer from "nodemailer";
+import {
+  EMAIL_FROM,
+  EMAIL_HOST,
+  EMAIL_PASSWORD,
+  EMAIL_PORT,
+  EMAIL_SECURE,
+  EMAIL_USERNAME,
+} from "../config/secrets.ts";
 
-const emailUser = process.env.EMAIL_USERNAME;
-const emailPass = process.env.EMAIL_PASSWORD;
-const emailFrom = process.env.EMAIL_FROM ?? emailUser;
+const emailUser = EMAIL_USERNAME;
+const emailPass = EMAIL_PASSWORD;
+const emailFrom = EMAIL_FROM;
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  host: EMAIL_HOST,
+  port: EMAIL_PORT,
+  secure: EMAIL_SECURE,
   auth: {
     user: emailUser,
     pass: emailPass,
+  },
+  tls: {
+    servername: EMAIL_HOST,
   },
 });
 
@@ -29,7 +42,11 @@ export const verifyEmailTransport = async () => {
 
   await transporter.verify();
   transportVerified = true;
-  console.log("Email SMTP transport verified");
+  console.log(
+    `Email SMTP transport verified (${EMAIL_HOST}:${EMAIL_PORT}, secure=${String(
+      EMAIL_SECURE
+    )})`
+  );
 };
 
 export const sendEmail = async (to: string, subject: string, text: string, html: string) => {

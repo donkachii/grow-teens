@@ -299,16 +299,17 @@ export const resendVerification = async (req: Request, res: Response) => {
     }
 
     const lastSent = user.verificationExpires;
-    const cooldownPeriod = 2 * 60 * 1000;
+    const cooldownPeriod = 2 * 60 * 1000; 
 
     if (lastSent && new Date().getTime() - new Date(lastSent).getTime() < cooldownPeriod) {
-      const waitSeconds = Math.ceil(
-        (cooldownPeriod - (new Date().getTime() - new Date(lastSent).getTime())) / 1000
-      );
+      const waitMinutes = Math.ceil(
+        (cooldownPeriod - (new Date().getTime() - new Date(lastSent).getTime())) /(60*1000)
+      ); 
+
       return res.status(429).json({
-        error: `Please wait ${waitSeconds} seconds before requesting another email`,
+        error: `Please wait ${waitMinutes} minutes before requesting another email`,
         code: "RATE_LIMITED",
-        retryAfter: waitSeconds,
+        retryAfter: waitMinutes,
       });
     }
 
