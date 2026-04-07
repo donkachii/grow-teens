@@ -9,15 +9,18 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  // Support Bearer token format
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : authHeader;
-
-  const splittedToken = token.split(" ")[1];
+  // Support both "Bearer <token>" and "token <token>" formats
+  let token: string;
+  if (authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7).trim();
+  } else if (authHeader.startsWith("token ")) {
+    token = authHeader.slice(6).trim();
+  } else {
+    token = authHeader.trim();
+  }
 
   try {
-    const payload = jwt.verify(splittedToken, process.env.JWT_SECRET as string) as { id: number };
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { id: number };
 
     const user = await prisma.user.findFirst({
       where: { id: payload.id },

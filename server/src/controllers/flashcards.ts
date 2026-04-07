@@ -96,13 +96,21 @@ export const addFlashcardToCollection = async (req: Request, res: Response) => {
     const { collectionId, flashcardId } = req.body;
     const userId = req.user!.id;
 
-    // Verify ownership
-    const collection = await prisma.flashcardCollection.findUnique({
-      where: { id: Number(collectionId), userId },
-    });
+    // Verify collection ownership and flashcard ownership
+    const [collection, flashcard] = await Promise.all([
+      prisma.flashcardCollection.findUnique({
+        where: { id: Number(collectionId), userId },
+      }),
+      prisma.flashcard.findUnique({
+        where: { id: Number(flashcardId) },
+      }),
+    ]);
 
     if (!collection) {
       return res.status(403).json({ message: "Collection not found or access denied" });
+    }
+    if (!flashcard || flashcard.userId !== userId) {
+      return res.status(403).json({ message: "Flashcard not found or access denied" });
     }
 
     const item = await prisma.flashcardCollectionItem.create({

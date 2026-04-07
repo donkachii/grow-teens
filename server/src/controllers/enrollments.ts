@@ -9,8 +9,8 @@ export const createEnrollment = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "User and course are required" });
     }
 
-    const existingEnrollment = await prisma.enrollment.findFirst({
-      where: { userId, courseId },
+    const existingEnrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
     });
 
     if (existingEnrollment) {
