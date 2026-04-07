@@ -1,35 +1,9 @@
 import React from "react";
-import {
-  Box,
-  Drawer,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  DrawerHeader,
-  DrawerBody,
-  DrawerFooter,
-  Image,
-  Flex,
-  Heading,
-  Text,
-  HStack,
-  VStack,
-  SimpleGrid,
-  Badge,
-  Button,
-  Icon,
-  Avatar,
-  useColorModeValue,
-} from "@chakra-ui/react";
-import {
-  FiStar,
-  FiClock,
-  FiUser,
-  FiPackage,
-  FiEdit2,
-} from "react-icons/fi";
+import Image from "next/image";
+import { FiStar, FiClock, FiUser, FiPackage, FiEdit2 } from "react-icons/fi";
 import { Course } from "@/types";
 import { convertDate } from "@/utils/formatDate";
+import { Drawer } from "@/components/ui/Overlay";
 
 interface DetailsDrawerProps {
   isOpen: boolean;
@@ -38,213 +12,191 @@ interface DetailsDrawerProps {
   handleEditCourse: (course: Course) => void;
 }
 
+const difficultyClasses: Record<string, string> = {
+  BEGINNER: "bg-emerald-100 text-emerald-700",
+  INTERMEDIATE: "bg-blue-100 text-blue-700",
+  ADVANCED: "bg-violet-100 text-violet-700",
+  EXPERT: "bg-red-100 text-red-700",
+};
+
 const DetailsDrawer = ({
   isOpen,
   onClose,
   selectedCourse,
   handleEditCourse,
 }: DetailsDrawerProps) => {
-
-  const textColor = useColorModeValue("gray.800", "white");
-  const mutedTextColor = useColorModeValue("gray.500", "gray.400");
-
-  const getDifficultyColor = (difficulty: string = "BEGINNER") => {
-    switch (difficulty) {
-      case "BEGINNER":
-        return "green";
-      case "INTERMEDIATE":
-        return "blue";
-      case "ADVANCED":
-        return "purple";
-      case "EXPERT":
-        return "red";
-      default:
-        return "gray";
-    }
-  };
+  const difficultyClass =
+    difficultyClasses[selectedCourse?.difficulty || "BEGINNER"] ||
+    "bg-slate-100 text-slate-700";
 
   return (
     <Drawer
       isOpen={isOpen}
-      placement="right"
       onClose={onClose}
-      size="md"
+      title="Course Details"
+      widthClassName="w-full max-w-2xl"
+      footer={
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              if (selectedCourse) handleEditCourse(selectedCourse);
+            }}
+            disabled={!selectedCourse}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <FiEdit2 className="h-4 w-4" />
+            Edit Course
+          </button>
+        </div>
+      }
     >
-      <DrawerOverlay />
-      <DrawerContent>
-        <DrawerCloseButton />
-
-        {/* Header image */}
-        <Box position="relative" height="180px">
+      <div className="space-y-6">
+        <div className="relative h-44 overflow-hidden rounded-3xl">
           <Image
             src={
               selectedCourse?.thumbnail ||
               "https://via.placeholder.com/800x180?text=No+Cover+Image"
             }
             alt={selectedCourse?.title || "Course details"}
-            objectFit="cover"
-            w="100%"
-            h="100%"
+            fill
+            unoptimized
+            className="object-cover"
           />
-          <Box
-            position="absolute"
-            bottom={0}
-            left={0}
-            right={0}
-            height="50%"
-            bgGradient="linear(to-t, blackAlpha.700, transparent)"
-          />
-        </Box>
-
-        <DrawerHeader pt={5} pb={0}>
-          <Flex justify="space-between" align="center">
-            <Heading size="lg">{selectedCourse?.title}</Heading>
-            <HStack>
-              {selectedCourse?.isFeatured && (
-                <Icon as={FiStar} color="yellow.400" boxSize={5} />
-              )}
-              <Badge
-                colorScheme={selectedCourse?.isPublished ? "green" : "gray"}
-                fontSize="sm"
-                px={2}
-                py={1}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-white">
+                {selectedCourse?.title}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedCourse?.isFeatured ? (
+                <span className="rounded-full bg-amber-100 p-2 text-amber-600">
+                  <FiStar className="h-4 w-4" />
+                </span>
+              ) : null}
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  selectedCourse?.isPublished
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-slate-200 text-slate-700"
+                }`}
               >
                 {selectedCourse?.isPublished ? "Published" : "Draft"}
-              </Badge>
-            </HStack>
-          </Flex>
-        </DrawerHeader>
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <DrawerBody>
-          <VStack align="stretch" spacing={6}>
-            <Box>
-              <Text fontWeight="medium" mb={1} color={textColor}>
-                Description
-              </Text>
-              <Text color={mutedTextColor}>{selectedCourse?.description}</Text>
-            </Box>
+        <section>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Description
+          </h3>
+          <p className="leading-7 text-slate-600">
+            {selectedCourse?.description || "No description yet."}
+          </p>
+        </section>
 
-            <SimpleGrid columns={2} spacing={4}>
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Category
-                </Text>
-                <Badge colorScheme="teal">
-                  {selectedCourse?.category?.name || "N/A"}
-                </Badge>
-              </Box>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Category</p>
+            <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
+              {selectedCourse?.category?.name || "N/A"}
+            </span>
+          </div>
 
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Difficulty
-                </Text>
-                <Badge
-                  colorScheme={getDifficultyColor(selectedCourse?.difficulty)}
-                >
-                  {selectedCourse?.difficulty}
-                </Badge>
-              </Box>
-            </SimpleGrid>
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Difficulty</p>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${difficultyClass}`}>
+              {selectedCourse?.difficulty || "BEGINNER"}
+            </span>
+          </div>
+        </div>
 
-            <SimpleGrid columns={3} spacing={4}>
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Duration
-                </Text>
-                <Flex align="center">
-                  <Icon as={FiClock} color="orange.500" mr={1} />
-                  <Text>{selectedCourse?.durationHours || 0} hours</Text>
-                </Flex>
-              </Box>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Duration</p>
+            <div className="flex items-center gap-2 text-slate-700">
+              <FiClock className="h-4 w-4 text-orange-500" />
+              <span>{selectedCourse?.durationHours || 0} hours</span>
+            </div>
+          </div>
 
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Enrollments
-                </Text>
-                <Flex align="center">
-                  <Icon as={FiUser} color="blue.500" mr={1} />
-                  <Text>{selectedCourse?._count?.enrollments || 0}</Text>
-                </Flex>
-              </Box>
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Enrollments</p>
+            <div className="flex items-center gap-2 text-slate-700">
+              <FiUser className="h-4 w-4 text-blue-500" />
+              <span>{selectedCourse?._count?.enrollments || 0}</span>
+            </div>
+          </div>
 
-              <Box>
-                <Text fontWeight="medium" mb={1} color={textColor}>
-                  Modules
-                </Text>
-                <Flex align="center">
-                  <Icon as={FiPackage} color="purple.500" mr={1} />
-                  <Text>{selectedCourse?._count?.modules || 0}</Text>
-                </Flex>
-              </Box>
-            </SimpleGrid>
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Modules</p>
+            <div className="flex items-center gap-2 text-slate-700">
+              <FiPackage className="h-4 w-4 text-violet-500" />
+              <span>{selectedCourse?._count?.modules || 0}</span>
+            </div>
+          </div>
+        </div>
 
-            {selectedCourse?.instructor && (
-              <Box>
-                <Text fontWeight="medium" mb={2} color={textColor}>
-                  Instructor
-                </Text>
-                <Flex align="center">
-                  <Avatar
-                    size="md"
-                    name={`${selectedCourse.instructor.firstName} ${selectedCourse.instructor.lastName}`}
+        {selectedCourse?.instructor ? (
+          <section className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Instructor
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
+                {selectedCourse.instructor.profileImage ? (
+                  <Image
                     src={selectedCourse.instructor.profileImage}
-                    mr={3}
+                    alt={`${selectedCourse.instructor.firstName} ${selectedCourse.instructor.lastName}`}
+                    width={56}
+                    height={56}
+                    unoptimized
+                    className="h-full w-full object-cover"
                   />
-                  <Box>
-                    <Text fontWeight="medium">
-                      {selectedCourse.instructor.firstName}{" "}
-                      {selectedCourse.instructor.lastName}
-                    </Text>
-                    <Text fontSize="sm" color={mutedTextColor}>
-                      ID: {selectedCourse.instructor.id}
-                    </Text>
-                  </Box>
-                </Flex>
-              </Box>
-            )}
+                ) : (
+                  `${selectedCourse.instructor.firstName?.[0] || ""}${selectedCourse.instructor.lastName?.[0] || ""}`
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">
+                  {selectedCourse.instructor.firstName}{" "}
+                  {selectedCourse.instructor.lastName}
+                </p>
+                <p className="text-sm text-slate-500">
+                  ID: {selectedCourse.instructor.id}
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
-            <Box>
-              <Text fontWeight="medium" mb={1} color={textColor}>
-                Created
-              </Text>
-              <Text color={mutedTextColor}>
-                {convertDate(selectedCourse?.createdAt || "")}
-              </Text>
-            </Box>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Created</p>
+            <p className="text-slate-700">
+              {convertDate(selectedCourse?.createdAt || "")}
+            </p>
+          </div>
 
-            <Box>
-              <Text fontWeight="medium" mb={1} color={textColor}>
-                Last Updated
-              </Text>
-              <Text color={mutedTextColor}>
-                {convertDate(selectedCourse?.updatedAt || "")}
-              </Text>
-            </Box>
-          </VStack>
-        </DrawerBody>
-
-        <DrawerFooter borderTopWidth="1px">
-          <Button
-            variant="outline"
-            colorScheme="gray"
-            mr={3}
-            onClick={onClose}
-          >
-            Close
-          </Button>
-          <Button
-            colorScheme="blue"
-            leftIcon={<FiEdit2 />}
-            onClick={() => {
-              onClose();
-              if (selectedCourse) handleEditCourse(selectedCourse);
-            }}
-            isDisabled={!selectedCourse}
-          >
-            Edit Course
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
+          <div className="rounded-2xl border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-500">Last Updated</p>
+            <p className="text-slate-700">
+              {convertDate(selectedCourse?.updatedAt || "")}
+            </p>
+          </div>
+        </div>
+      </div>
     </Drawer>
   );
 };

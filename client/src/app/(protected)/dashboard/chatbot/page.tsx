@@ -9,25 +9,6 @@ import React, {
   useTransition,
 } from "react";
 import {
-  Box,
-  Flex,
-  Text,
-  Input,
-  Button,
-  Avatar,
-  IconButton,
-  Heading,
-  Spinner,
-  Drawer,
-  DrawerBody,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  useDisclosure,
-  useToast,
-} from "@chakra-ui/react";
-import {
   FiSend,
   FiMenu,
   FiMessageSquare,
@@ -35,10 +16,12 @@ import {
   FiThumbsDown,
   FiTrash2,
 } from "react-icons/fi";
+import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import requestClient from "@/lib/requestClient";
 import { useSession } from "next-auth/react";
 import { NextAuthUserSession } from "@/types";
+import { Drawer } from "@/components/ui/Overlay";
 
 interface ChatMessage {
   id: number | string;
@@ -58,23 +41,22 @@ interface ChatSession {
   messages?: ChatMessage[];
 }
 
-// OpenAI message format
 interface OpenAIChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
 }
 
+const inputClassName =
+  "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500";
+
 export default function ChatbotPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<ChatSession | null>(
-    null
-  );
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
@@ -82,7 +64,6 @@ export default function ChatbotPage() {
   const session = useSession();
   const sessionData = session.data as NextAuthUserSession;
 
-  // List all chat sessions
   const loadSessions = useCallback(() => {
     startTransition(async () => {
       try {
@@ -90,21 +71,14 @@ export default function ChatbotPage() {
           token: sessionData?.user?.token,
         }).get("/chatbot/sessions");
 
-        if (response.data) {
-          setSessions(response.data.data || []);
-        }
+        if (response.data) setSessions(response.data.data || []);
       } catch (error) {
         console.error("Error loading sessions:", error);
-        toast({
-          title: "Error loading sessions",
-          status: "error",
-          duration: 3000,
-        });
+        toast.error("Error loading sessions");
       }
     });
-  }, [sessionData?.user?.token, toast]);
+  }, [sessionData?.user?.token]);
 
-  // Load a specific session or create a new one
   const loadSession = useCallback(
     (id?: number) => {
       startTransition(async () => {
@@ -121,77 +95,56 @@ export default function ChatbotPage() {
           if (response.data) {
             setCurrentSession(response.data.data);
 
-            // If this is a new session, update the URL
             if (!id && response.data.data?.id) {
-              router.push(
-                `/dashboard/chatbot?sessionId=${response.data.data.id}`,
-                { scroll: false }
-              );
+              router.push(`/dashboard/chatbot?sessionId=${response.data.data.id}`, {
+                scroll: false,
+              });
             }
           }
         } catch (error) {
           console.error("Error with session:", error);
-          toast({
-            title: "Error loading conversation",
-            status: "error",
-            duration: 3000,
-          });
+          toast.error("Error loading conversation");
         } finally {
           setLoading(false);
         }
       });
     },
-    [sessionData?.user?.token, router, toast]
+    [sessionData?.user?.token, router]
   );
 
-  // Delete a chat session
   const deleteSession = useCallback(
-    (sessionId: number) => {
+    (targetSessionId: number) => {
       startTransition(async () => {
         try {
           await requestClient({
             token: sessionData?.user?.token,
-          }).delete(`/chatbot/session/${sessionId}`);
+          }).delete(`/chatbot/session/${targetSessionId}`);
 
-          toast({
-            title: "Conversation deleted",
-            status: "success",
-            duration: 2000,
-          });
+          toast.success("Conversation deleted");
+          setSessions((prev) => prev.filter((s) => s.id !== targetSessionId));
 
-          // Remove from local state
-          setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-
-          // If this was the active session, load a new one
-          if (currentSession?.id === sessionId) {
+          if (currentSession?.id === targetSessionId) {
             router.push("/dashboard/chatbot", { scroll: false });
             loadSession();
           }
         } catch (error) {
           console.error("Error deleting session:", error);
-          toast({
-            title: "Error deleting conversation",
-            status: "error",
-            duration: 3000,
-          });
+          toast.error("Error deleting conversation");
         }
       });
     },
-    [sessionData?.user?.token, toast, currentSession, router, loadSession]
+    [sessionData?.user?.token, currentSession, router, loadSession]
   );
 
-  // Send a message to the chatbot
   const sendMessage = useCallback(async () => {
     if (!message.trim() || !currentSession) return;
 
     const userMessage = message;
     setMessage("");
 
-    // Create temporary IDs for optimistic updates
     const tempUserMsgId = `temp_user_${Date.now()}`;
     const tempAiMsgId = `temp_ai_${Date.now()}`;
 
-    // Optimistically add user message to UI
     setCurrentSession((prev) => {
       if (!prev) return prev;
       return {
@@ -212,7 +165,6 @@ export default function ChatbotPage() {
     try {
       setLoading(true);
 
-      // Prepare conversation history for AI context
       const openAIMessages: OpenAIChatMessage[] = [
         {
           role: "system",
@@ -221,12 +173,8 @@ export default function ChatbotPage() {
         },
       ];
 
-      // Add conversation history
-      if (currentSession.messages && currentSession.messages.length > 0) {
-        // Only use the last 10 messages for context
-        const recentMessages = currentSession.messages.slice(-10);
-
-        recentMessages.forEach((msg) => {
+      if (currentSession.messages?.length) {
+        currentSession.messages.slice(-10).forEach((msg) => {
           openAIMessages.push({
             role: msg.role === "USER" ? "user" : "assistant",
             content: msg.content,
@@ -234,13 +182,11 @@ export default function ChatbotPage() {
         });
       }
 
-      // Add the new user message
       openAIMessages.push({
         role: "user",
         content: userMessage,
       });
 
-      // Add placeholder for AI response
       setCurrentSession((prev) => {
         if (!prev) return prev;
         return {
@@ -258,41 +204,31 @@ export default function ChatbotPage() {
         };
       });
 
-      // Stream the response from our Next.js API route
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messages: openAIMessages,
-        }),
+        body: JSON.stringify({ messages: openAIMessages }),
       });
 
       if (!response.ok || !response.body) {
         throw new Error(`Failed to send message: ${response.status}`);
       }
 
-      // Process the stream
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedResponse = "";
 
       while (true) {
         const { done, value } = await reader.read();
+        if (done) break;
 
-        if (done) {
-          break;
-        }
-
-        // Decode the stream chunk
         const chunk = decoder.decode(value, { stream: true });
         accumulatedResponse += chunk;
 
-        // Update the AI message in real-time as it streams
         setCurrentSession((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             messages: prev.messages?.map((msg) =>
@@ -304,18 +240,16 @@ export default function ChatbotPage() {
         });
       }
 
-      // After streaming is complete, save both messages to the backend
       try {
         const saveResponse = await requestClient({
           token: sessionData?.user?.token,
         }).post("/chatbot/messages", {
           sessionId: currentSession.id,
-          userMessage: userMessage,
+          userMessage,
           assistantMessage: accumulatedResponse,
-          aiModel: "meta-llama/llama-3.1-8b-instruct", // The model you're using
+          aiModel: "meta-llama/llama-3.1-8b-instruct",
         });
 
-        // Replace temporary messages with actual saved messages from the database
         if (saveResponse.data?.data) {
           const {
             userMessage: savedUserMsg,
@@ -324,7 +258,6 @@ export default function ChatbotPage() {
 
           setCurrentSession((prev) => {
             if (!prev) return prev;
-
             return {
               ...prev,
               messages: prev.messages?.map((msg) => {
@@ -337,17 +270,10 @@ export default function ChatbotPage() {
         }
       } catch (saveError) {
         console.error("Error saving messages to database:", saveError);
-        toast({
-          title: "Error saving conversation",
-          description: "Your message was received but couldn't be saved.",
-          status: "warning",
-          duration: 3000,
-        });
+        toast.warning("Your message was received but couldn't be saved.");
       }
 
-      // If the session was new, update the title
       if (currentSession.title === "New Conversation" && accumulatedResponse) {
-        // Generate a title from the first exchange
         const titleResponse = await fetch("/api/chat/title", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -359,27 +285,18 @@ export default function ChatbotPage() {
 
         if (titleResponse.ok) {
           const { title } = await titleResponse.json();
-
-          // Update the session title
           await requestClient({
             token: sessionData?.user?.token,
           }).put(`/chatbot/session/${currentSession.id}`, { title });
-
-          // Update local state
           setCurrentSession((prev) => (prev ? { ...prev, title } : prev));
         }
       }
-      // Refresh sessions list to get updated timestamps
+
       loadSessions();
     } catch (error) {
       console.error("Error sending message:", error);
-      toast({
-        title: "Error sending message",
-        status: "error",
-        duration: 3000,
-      });
+      toast.error("Error sending message");
 
-      // Remove the optimistic messages on error
       setCurrentSession((prev) => {
         if (!prev) return prev;
         return {
@@ -392,272 +309,235 @@ export default function ChatbotPage() {
     } finally {
       setLoading(false);
     }
-  }, [message, currentSession, sessionData?.user?.token, loadSessions, toast]);
+  }, [message, currentSession, sessionData?.user?.token, loadSessions]);
 
-  // Provide feedback on an AI response
   const provideFeedback = useCallback(
     (messageId: number, rating: number) => {
       startTransition(async () => {
         try {
           await requestClient({
             token: sessionData?.user?.token,
-          }).post(`/chatbot/feedback/${messageId}`, {
-            rating,
-          });
+          }).post(`/chatbot/feedback/${messageId}`, { rating });
 
-          toast({
-            title: "Thank you for your feedback!",
-            status: "success",
-            duration: 2000,
-          });
+          toast.success("Thank you for your feedback!");
         } catch (error) {
           console.error("Error submitting feedback:", error);
-          toast({
-            title: "Error submitting feedback",
-            status: "error",
-            duration: 3000,
-          });
+          toast.error("Error submitting feedback");
         }
       });
     },
-    [sessionData?.user?.token, toast]
+    [sessionData?.user?.token]
   );
 
-  // Initial data loading
   useEffect(() => {
     if (sessionData?.user) {
       loadSessions();
-
-      if (sessionId) {
-        loadSession(Number(sessionId));
-      } else {
-        loadSession();
-      }
+      if (sessionId) loadSession(Number(sessionId));
+      else loadSession();
     }
   }, [sessionId, sessionData, loadSessions, loadSession]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentSession?.messages]);
 
   return (
-    <Box height="calc(100vh - 80px)" position="relative">
-      <Flex h="full" direction="column">
-        {/* Header */}
-        <Flex
-          px={4}
-          py={3}
-          borderBottom="1px"
-          borderColor="gray.200"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Flex alignItems="center">
-            <IconButton
-              aria-label="Menu"
-              icon={<FiMenu />}
-              variant="ghost"
-              mr={3}
-              onClick={onOpen}
-            />
-            <Heading size="md">
+    <div className="relative h-[calc(100vh-80px)] overflow-hidden">
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(true)}
+              className="rounded-xl p-2 text-slate-600 transition hover:bg-slate-100"
+            >
+              <FiMenu className="h-5 w-5" />
+            </button>
+            <h1 className="text-lg font-semibold text-slate-900">
               {currentSession?.title || "New Conversation"}
-            </Heading>
-          </Flex>
-          <Button
-            size="sm"
-            colorScheme="primary"
+            </h1>
+          </div>
+          <button
+            type="button"
             onClick={() => loadSession()}
-            isLoading={isPending}
+            disabled={isPending}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
           >
-            New Chat
-          </Button>
-        </Flex>
+            {isPending ? "Loading..." : "New Chat"}
+          </button>
+        </div>
 
-        {/* Messages */}
-        <Box flex="1" overflowY="auto" px={4} py={6} bg="gray.50">
+        <div className="flex-1 overflow-y-auto bg-slate-50 px-4 py-6">
           {(loading && !currentSession?.messages?.length) || isPending ? (
-            <Flex justifyContent="center" my={10}>
-              <Spinner size="xl" />
-            </Flex>
+            <div className="my-10 text-center text-sm text-slate-500">Loading conversation...</div>
           ) : (
             <>
-              {!currentSession?.messages?.length && (
-                <Box textAlign="center" color="gray.500" mt={10}>
-                  <Text fontSize="lg" mb={2}>
-                    Welcome to GrowTeens AI Assistant
-                  </Text>
-                  <Text>
+              {!currentSession?.messages?.length ? (
+                <div className="mt-10 text-center text-slate-500">
+                  <p className="mb-2 text-lg">Welcome to GrowTeens AI Assistant</p>
+                  <p>
                     Ask questions about your courses, get help with assignments,
                     or explore learning resources.
-                  </Text>
-                </Box>
-              )}
+                  </p>
+                </div>
+              ) : null}
 
               {currentSession?.messages?.map((msg) => (
-                <Flex
+                <div
                   key={msg.id}
-                  mb={4}
-                  justifyContent={
-                    msg.role === "USER" ? "flex-end" : "flex-start"
-                  }
+                  className={`mb-4 flex ${
+                    msg.role === "USER" ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  {msg.role === "ASSISTANT" && (
-                    <Avatar
-                      size="sm"
-                      bg="primary.500"
-                      color="white"
-                      name="GrowTeens AI"
-                      mr={2}
-                    />
-                  )}
+                  {msg.role === "ASSISTANT" ? (
+                    <div className="mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                      AI
+                    </div>
+                  ) : null}
 
-                  <Box
-                    maxW="70%"
-                    bg={msg.role === "USER" ? "primary.500" : "white"}
-                    color={msg.role === "USER" ? "white" : "black"}
-                    p={3}
-                    borderRadius="lg"
-                    boxShadow="sm"
+                  <div
+                    className={`max-w-[70%] rounded-3xl px-4 py-3 shadow-sm ${
+                      msg.role === "USER"
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-slate-900"
+                    }`}
                   >
-                    <Text whiteSpace="pre-wrap">{msg.content}</Text>
+                    <p className="whitespace-pre-wrap text-sm leading-6">
+                      {msg.content}
+                    </p>
 
-                    {msg.role === "ASSISTANT" && typeof msg.id === "number" && (
-                      <Flex mt={2} justifyContent="flex-end" gap={1}>
-                        <IconButton
-                          aria-label="Thumbs Up"
-                          icon={<FiThumbsUp size={14} />}
-                          size="xs"
-                          variant="ghost"
+                    {msg.role === "ASSISTANT" && typeof msg.id === "number" ? (
+                      <div className="mt-2 flex justify-end gap-1">
+                        <button
+                          type="button"
                           onClick={() => provideFeedback(msg.id as number, 5)}
-                        />
-                        <IconButton
-                          aria-label="Thumbs Down"
-                          icon={<FiThumbsDown size={14} />}
-                          size="xs"
-                          variant="ghost"
+                          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <FiThumbsUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => provideFeedback(msg.id as number, 1)}
-                        />
-                      </Flex>
-                    )}
-                  </Box>
+                          className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <FiThumbsDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
 
-                  {msg.role === "USER" && <Avatar size="sm" ml={2} />}
-                </Flex>
+                  {msg.role === "USER" ? (
+                    <div className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                      U
+                    </div>
+                  ) : null}
+                </div>
               ))}
+
               <div ref={messagesEndRef} />
 
-              {loading && (
-                <Flex justifyContent="center" my={4}>
-                  <Spinner size="sm" />
-                </Flex>
-              )}
+              {loading ? (
+                <div className="my-4 text-center text-sm text-slate-500">
+                  Generating reply...
+                </div>
+              ) : null}
             </>
           )}
-        </Box>
+        </div>
 
-        {/* Input */}
-        <Flex p={4} borderTop="1px" borderColor="gray.200" alignItems="center">
-          <Input
-            placeholder="Ask something about your courses..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            mr={2}
-            onKeyPress={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            disabled={loading || isPending}
-          />
-          <IconButton
-            aria-label="Send message"
-            icon={<FiSend />}
-            colorScheme="primary"
-            isLoading={loading || isPending}
-            onClick={sendMessage}
-            disabled={!message.trim() || !currentSession}
-          />
-        </Flex>
-      </Flex>
-
-      {/* Sessions Drawer */}
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerCloseButton />
-          <DrawerHeader>Your Conversations</DrawerHeader>
-
-          <DrawerBody>
-            <Button
-              leftIcon={<FiMessageSquare />}
-              colorScheme="primary"
-              width="full"
-              mb={4}
-              onClick={() => {
-                loadSession();
-                onClose();
+        <div className="border-t border-slate-200 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <input
+              placeholder="Ask something about your courses..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
               }}
-              isLoading={isPending}
+              disabled={loading || isPending}
+              className={inputClassName}
+            />
+            <button
+              type="button"
+              onClick={sendMessage}
+              disabled={!message.trim() || !currentSession || loading || isPending}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:opacity-60"
             >
-              New Conversation
-            </Button>
+              <FiSend className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-            {isPending ? (
-              <Spinner size="md" mx="auto" mt={8} display="block" />
-            ) : sessions.length === 0 ? (
-              <Text color="gray.500" textAlign="center" mt={8}>
-                No previous conversations
-              </Text>
-            ) : (
-              sessions.map((session) => (
-                <Flex
-                  key={session.id}
-                  p={3}
-                  _hover={{ bg: "gray.100" }}
-                  borderRadius="md"
-                  mb={2}
-                  alignItems="center"
-                  justifyContent="space-between"
+      <Drawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        side="left"
+        widthClassName="w-full max-w-sm"
+        title="Your Conversations"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            loadSession();
+            setIsDrawerOpen(false);
+          }}
+          disabled={isPending}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+        >
+          <FiMessageSquare className="h-4 w-4" />
+          {isPending ? "Loading..." : "New Conversation"}
+        </button>
+
+        <div className="mt-4">
+          {isPending ? (
+            <p className="mt-8 text-center text-sm text-slate-500">Loading...</p>
+          ) : sessions.length === 0 ? (
+            <p className="mt-8 text-center text-sm text-slate-500">
+              No previous conversations
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sessions.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-3 transition hover:bg-slate-50"
                 >
-                  <Box
-                    cursor="pointer"
-                    flex="1"
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
                     onClick={() => {
-                      router.push(
-                        `/dashboard/chatbot?sessionId=${session.id}`,
-                        { scroll: false }
-                      );
-                      onClose();
+                      router.push(`/dashboard/chatbot?sessionId=${item.id}`, {
+                        scroll: false,
+                      });
+                      setIsDrawerOpen(false);
                     }}
                   >
-                    <Text fontWeight="medium" noOfLines={1}>
-                      {session.title}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      {new Date(session.updatedAt).toLocaleDateString()}
-                    </Text>
-                  </Box>
+                    <p className="truncate font-medium text-slate-900">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {new Date(item.updatedAt).toLocaleDateString()}
+                    </p>
+                  </button>
 
-                  <IconButton
-                    aria-label="Delete conversation"
-                    icon={<FiTrash2 size={16} />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="red"
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteSession(session.id);
+                      deleteSession(item.id);
                     }}
-                  />
-                </Flex>
-              ))
-            )}
-          </DrawerBody>
-        </DrawerContent>
+                    className="rounded-full p-2 text-red-500 transition hover:bg-red-50"
+                  >
+                    <FiTrash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Drawer>
-    </Box>
+    </div>
   );
 }

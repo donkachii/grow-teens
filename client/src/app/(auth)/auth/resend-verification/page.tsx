@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -12,7 +12,7 @@ import { NextAuthUserSession } from "@/types";
 import requestClient from "@/lib/requestClient";
 import { handleServerErrorMessage } from "@/utils";
 
-export default function ResendVerification() {
+function ResendVerificationContent() {
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get("email") ?? "";
   const justRegistered = searchParams.get("registered") === "true";
@@ -107,5 +107,26 @@ export default function ResendVerification() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResendVerification() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+          <div className="w-full max-w-[500px] rounded-2xl bg-white p-8 shadow-lg">
+            <div className="space-y-4">
+              <h1 className="text-center text-2xl font-semibold text-gray-900">
+                Resend Verification Email
+              </h1>
+              <p className="text-center text-sm text-gray-500">Loading...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ResendVerificationContent />
+    </Suspense>
   );
 }
