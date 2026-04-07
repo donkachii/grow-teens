@@ -55,6 +55,14 @@ export default function LoginForm() {
     }
 
     if (response.error) {
+      if (response.error === "Please verify your email before logging in") {
+        const resendUrl = `/auth/resend-verification?email=${encodeURIComponent(
+          data.email
+        )}`;
+        window.location.href = resendUrl;
+        return;
+      }
+
       setErrorMessage(response.error);
       return;
     }
