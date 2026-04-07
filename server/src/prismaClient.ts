@@ -1,7 +1,9 @@
 import { PrismaClient, StatusType } from "@prisma/client";
 // import { PrismaClient } from 'app/generated/prisma/client'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DATABASE_URL,
+});
 
 export const statusType = StatusType;
 
