@@ -1,13 +1,13 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "src/server.ts",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "prisma generate",
+    "build": "prisma generate && tsc",
     "typecheck": "tsc --noEmit",
-    "start": "node --env-file=.env --experimental-strip-types src/server.ts",
+    "start": "node --env-file=.env dist/server.js",
     "dev": "node --watch --env-file=.env --experimental-strip-types --experimental-sqlite ./src/server.ts"
   },
   "keywords": [],
