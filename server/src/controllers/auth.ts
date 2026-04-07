@@ -41,7 +41,8 @@ const sendVerificationEmail = async (email: string, token: string) => {
       </div>
     `;
 
-  await sendEmail(email, "Verify Your GrowTeens Account", "", html);
+  const text = `Welcome to GrowTeens! Please verify your email by visiting: ${verificationUrl}\n\nThis link expires in 10 minutes.`;
+  await sendEmail(email, "Verify Your GrowTeens Account", text, html);
 };
 
 export const registerUser = async (req: Request, res: Response) => {

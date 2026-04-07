@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "prisma generate && tsc",
+    "build": "prisma generate",
     "typecheck": "tsc --noEmit",
     "start": "node --experimental-strip-types src/server.ts",
     "dev": "node --watch --env-file=.env --experimental-strip-types --experimental-sqlite ./src/server.ts"
+  },
+  "engines": {
+    "node": ">=22.6.0"
   },
   "keywords": [],
   "author": "Onyekachi",
@@ -29,7 +32,6 @@
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^8.3.2",
