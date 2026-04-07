@@ -11,7 +11,7 @@ const envPath = envPaths.find((candidate) => fs.existsSync(candidate));
 
 dotenv.config(envPath ? { path: envPath } : undefined);
 
-export const PORT = process.env.SERVER_PORT;
+export const PORT = process.env.PORT || process.env.SERVER_PORT;
 export const DATABASE_URL = process.env.DATABASE_URL;
 export const JWT_SECRET = process.env.JWT_SECRET as string;
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -24,7 +24,6 @@ export const EMAIL_FROM = process.env.EMAIL_FROM ?? process.env.EMAIL_USERNAME;
 export const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 if (
-  !PORT ||
   !DATABASE_URL ||
   !JWT_SECRET ||
   !CLOUDINARY_API_KEY ||
