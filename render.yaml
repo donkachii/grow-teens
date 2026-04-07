@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: grow-teens-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
