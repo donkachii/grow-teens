@@ -98,8 +98,10 @@ export const registerUser = async (req: Request, res: Response) => {
     const verificationExpires = new Date(Date.now() + 10 * 60 * 1000);
     const hashedPassword = bcrypt.hashSync(password, 10);
 
+    let user: Awaited<ReturnType<typeof prisma.user.create>> | null = null;
+
     try {
-      const user = await prisma.user.create({
+      user = await prisma.user.create({
         data: {
           firstName,
           lastName,
@@ -120,14 +122,23 @@ export const registerUser = async (req: Request, res: Response) => {
           "Registration successful. Please check your email to verify your account.",
         userId: user.id,
       });
-    } catch (dbError) {
-      if ((dbError as PrismaError).code === "P2002") {
+    } catch (registrationError) {
+      if ((registrationError as PrismaError).code === "P2002") {
         return res.status(409).json({
           error: "An account with this email already exists",
           code: "EMAIL_EXISTS",
         });
       }
-      throw dbError;
+
+      if (user) {
+        await prisma.user
+          .delete({ where: { id: user.id } })
+          .catch((cleanupError) => {
+            console.error("Failed to clean up user after email send failure:", cleanupError);
+          });
+      }
+
+      throw registrationError;
     }
   } catch (err) {
     return handleError(err as PrismaError, res, "Unable to complete registration");

@@ -24,7 +24,17 @@ export const EMAIL_FROM = process.env.EMAIL_FROM ?? process.env.EMAIL_USERNAME;
 export const EMAIL_USERNAME = process.env.EMAIL_USERNAME;
 export const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 export const EMAIL_HOST = process.env.EMAIL_HOST ?? "smtp.gmail.com";
-export const EMAIL_PORT = Number(process.env.EMAIL_PORT ?? 465);
+export const EMAIL_PORT = Number(process.env.EMAIL_PORT ?? 587);
+export const EMAIL_CONNECTION_TIMEOUT_MS = Number(
+  process.env.EMAIL_CONNECTION_TIMEOUT_MS ?? 10000
+);
+export const EMAIL_GREETING_TIMEOUT_MS = Number(
+  process.env.EMAIL_GREETING_TIMEOUT_MS ?? 10000
+);
+export const EMAIL_SOCKET_TIMEOUT_MS = Number(
+  process.env.EMAIL_SOCKET_TIMEOUT_MS ?? 10000
+);
+export const EMAIL_DEBUG = process.env.EMAIL_DEBUG === "true";
 export const EMAIL_SECURE =
   process.env.EMAIL_SECURE !== undefined
     ? process.env.EMAIL_SECURE === "true"
