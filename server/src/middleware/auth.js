@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import prisma from "../prismaClient.js";
 
+const BEARER_PREFIX = "Bearer ";
+const TOKEN_PREFIX = "token ";
+
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
 
@@ -8,10 +11,10 @@ const authMiddleware = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : authHeader.startsWith("token ")
-    ? authHeader.slice(6).trim()
+  const token = authHeader.startsWith(BEARER_PREFIX)
+    ? authHeader.slice(BEARER_PREFIX.length).trim()
+    : authHeader.startsWith(TOKEN_PREFIX)
+    ? authHeader.slice(TOKEN_PREFIX.length).trim()
     : authHeader.trim();
 
   if (!token) {

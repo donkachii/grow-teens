@@ -335,6 +335,7 @@ export const resendVerification = async (req, res) => {
     const lastSent = user.verificationExpires;
     const tokenLifetime = VERIFICATION_TOKEN_TTL_MS;
     const cooldownPeriod = VERIFICATION_RESEND_COOLDOWN_MS;
+    // verificationExpires stores expiry time, so subtract token TTL to derive sent time.
     const lastSentAt = lastSent
       ? new Date(new Date(lastSent).getTime() - tokenLifetime)
       : null;
