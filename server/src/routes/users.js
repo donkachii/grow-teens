@@ -15,6 +15,10 @@ userRoutes.patch(
   [authMiddleware, adminMiddleware],
   updateUserStatus
 );
-userRoutes.patch("/:userId/role", [authMiddleware, adminMiddleware], updateUserRole);
+userRoutes.patch(
+  "/:userId/role",
+  [authMiddleware, adminMiddleware],
+  updateUserRole
+);
 
 export default userRoutes;
