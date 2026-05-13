@@ -328,11 +328,15 @@ export const resendVerification = async (req, res) => {
 
     // Check if we've sent too many emails recently
     const lastSent = user.verificationExpires;
+    const tokenLifetime = 10 * 60 * 1000; // verification token is valid for 10 minutes
     const cooldownPeriod = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const lastSentAt = lastSent
+      ? new Date(new Date(lastSent).getTime() - tokenLifetime)
+      : null;
 
-    if (lastSent && new Date() - new Date(lastSent) < cooldownPeriod) {
+    if (lastSentAt && new Date() - lastSentAt < cooldownPeriod) {
       const waitSeconds = Math.ceil(
-        (cooldownPeriod - (new Date() - new Date(lastSent))) / 1000
+        (cooldownPeriod - (new Date() - lastSentAt)) / 1000
       );
       return res.status(429).json({
         error: `Please wait ${waitSeconds} seconds before requesting another email`,
