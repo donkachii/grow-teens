@@ -333,11 +333,10 @@ export const resendVerification = async (req, res) => {
 
     // Check if we've sent too many emails recently
     const lastSent = user.verificationExpires;
-    const tokenLifetime = VERIFICATION_TOKEN_TTL_MS;
     const cooldownPeriod = VERIFICATION_RESEND_COOLDOWN_MS;
     // verificationExpires stores expiry time, so subtract token TTL to derive sent time.
     const lastSentAt = lastSent
-      ? new Date(new Date(lastSent).getTime() - tokenLifetime)
+      ? new Date(new Date(lastSent).getTime() - VERIFICATION_TOKEN_TTL_MS)
       : null;
 
     if (lastSentAt && new Date() - lastSentAt < cooldownPeriod) {
